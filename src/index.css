@@ -1,0 +1,67 @@
+@keyframes toast-pop {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.95); }
+  13%  { opacity: 1; transform: translateY(0)    scale(1);    }
+  80%  { opacity: 1; transform: translateY(0)    scale(1);    }
+  100% { opacity: 0; transform: translateY(10px) scale(0.95); }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-bone text-ink font-body antialiased dark:bg-ink dark:text-bone;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  :focus-visible {
+    outline: 2px solid theme("colors.gold");
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-5 sm:px-6 lg:px-8;
+  }
+  .eyebrow {
+    @apply inline-block font-body text-xs font-semibold uppercase tracking-[0.22em] text-gold;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-card px-6 py-3
+           font-body text-sm font-semibold transition-colors duration-200;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-bone hover:bg-[#fda437] hover:text-white dark:bg-bone dark:text-ink dark:hover:bg-[#fda437] dark:hover:text-white;
+  }
+  .btn-accent {
+    @apply btn bg-gold text-ink hover:bg-[#fda437] hover:text-white;
+  }
+  .btn-ghost {
+    @apply btn border border-ink/20 text-ink hover:border-[#fda437] hover:bg-[#fda437] hover:text-white
+           dark:border-bone/20 dark:text-bone dark:hover:border-[#fda437] dark:hover:bg-[#fda437] dark:hover:text-white;
+  }
+  .input-field {
+    @apply w-full rounded-card border border-mist bg-bone px-3 py-2.5 text-sm text-ink
+           placeholder:text-ink/35 focus:border-gold focus:outline-none
+           dark:border-edge dark:bg-carbon dark:text-bone dark:placeholder:text-bone/35;
+  }
+}
