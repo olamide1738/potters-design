@@ -8,6 +8,7 @@ export default {
         ink: "#000000",
         bone: "#ffffff",
         gold: "#d4af37",
+        cream: "#F1EBE1",
         surface: "#f5f5f5",
         carbon: "#111111",
         mist: "#e0e0e0",

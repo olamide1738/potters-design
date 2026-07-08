@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, ScrollRestoration } from "react-router-dom";
+import { Outlet, ScrollRestoration, useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { Toaster } from "./Toaster";
@@ -8,10 +8,12 @@ import { CartDrawer } from "./CartDrawer";
 import { SearchOverlay } from "./SearchOverlay";
 import { PromoPopup } from "./PromoPopup";
 import { BackToTop } from "./BackToTop";
+import { GoogleTranslate } from "./GoogleTranslate";
 import { useThemeStore } from "@/store/useThemeStore";
 
 export function RootLayout() {
   const theme = useThemeStore((s) => s.theme);
+  const location = useLocation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -27,7 +29,9 @@ export function RootLayout() {
       </a>
       <Header />
       <main id="main" className="flex-1">
-        <Outlet />
+        <div key={location.pathname} className="animate-fade-in motion-reduce:animate-none">
+          <Outlet />
+        </div>
       </main>
       <Footer />
       <ScrollRestoration />
@@ -37,6 +41,7 @@ export function RootLayout() {
       <SearchOverlay />
       <PromoPopup />
       <BackToTop />
+      <GoogleTranslate />
     </div>
   );
 }

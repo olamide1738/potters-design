@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ShopFilters } from "@/components/ShopFilters";
 import { ProductCard } from "@/components/ProductCard";
+import { Reveal } from "@/components/Reveal";
 import { PRODUCTS } from "@/data/products";
 import { priceCeil, priceFloor } from "@/lib/format";
 import type { ShopFilterState, SortKey } from "@/types";
@@ -146,8 +147,10 @@ export function ShopPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
-              {results.map((p) => (
-                <ProductCard key={p.id} product={p} />
+              {results.map((p, i) => (
+                <Reveal key={p.id} delay={(i % 3) * 70}>
+                  <ProductCard product={p} />
+                </Reveal>
               ))}
             </div>
           )}

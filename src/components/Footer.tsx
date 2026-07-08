@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
-    <footer className="mt-24 bg-carbon text-bone">
+    <footer className="bg-carbon text-bone">
       <div className="shell grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <img src="/logo.png" alt="Potter's Design" className="h-12 w-auto mix-blend-screen" />

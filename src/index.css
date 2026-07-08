@@ -5,9 +5,19 @@
   100% { opacity: 0; transform: translateY(10px) scale(0.95); }
 }
 
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Gentle fade played on each route change (see RootLayout) */
+.animate-fade-in {
+  animation: fade-in 0.45s ease-out both;
+}
 
 @layer base {
   :root {
@@ -21,6 +31,9 @@
   }
   body {
     @apply bg-bone text-ink font-body antialiased dark:bg-ink dark:text-bone;
+  }
+  ::selection {
+    @apply bg-gold text-ink;
   }
   h1, h2, h3, h4 {
     @apply font-display;
@@ -47,7 +60,8 @@
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-card px-6 py-3
-           font-body text-sm font-semibold transition-colors duration-200;
+           font-body text-sm font-semibold transition-all duration-200
+           active:scale-[0.97] motion-reduce:active:scale-100;
   }
   .btn-primary {
     @apply btn bg-ink text-bone hover:bg-[#fda437] hover:text-white dark:bg-bone dark:text-ink dark:hover:bg-[#fda437] dark:hover:text-white;
@@ -64,4 +78,27 @@
            placeholder:text-ink/35 focus:border-gold focus:outline-none
            dark:border-edge dark:bg-carbon dark:text-bone dark:placeholder:text-bone/35;
   }
+}
+
+/* ---- Google Translate widget: keep it fully hidden, use our own dropdown ---- */
+#google_translate_element {
+  display: none !important;
+}
+.goog-te-banner-frame,
+.goog-te-gadget-icon,
+.skiptranslate iframe {
+  display: none !important;
+}
+/* Google forces `body { top: 40px }` for its banner — undo it */
+body {
+  top: 0 !important;
+}
+/* Suppress the on-hover translation tooltip and text highlight */
+.goog-tooltip,
+.goog-tooltip * {
+  display: none !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
 }

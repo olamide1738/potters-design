@@ -31,7 +31,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group relative flex flex-col">
       {/* Image */}
-      <div className="relative aspect-[3/4] overflow-hidden rounded-card bg-surface shadow-md dark:bg-carbon dark:shadow-none">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-card bg-surface shadow-[0_10px_30px_-6px_rgba(17,17,17,0.18)] ring-1 ring-black/[0.06] transition-[transform,box-shadow] duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_16px_40px_-8px_rgba(17,17,17,0.28)] motion-reduce:transform-none motion-reduce:transition-none dark:bg-carbon dark:shadow-none dark:ring-white/10">
         <Link to={`/shop/${product.slug}`} aria-label={product.name}>
           <img
             src={product.image}

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useStore } from "@/store/useStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { useUIStore } from "@/store/useUIStore";
 import { cn } from "@/lib/format";
+import { LANGUAGES, getCurrentLang, setLanguage } from "@/lib/translate";
 
 const NAV_LEFT = [
   { label: "Home", to: "/" },
@@ -13,11 +14,14 @@ const NAV_LEFT = [
 
 const ALL_NAV = NAV_LEFT;
 
-const LANGUAGES = ["EN", "FR", "DE", "ES"];
-
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [lang, setLang] = useState("EN");
+  const [lang, setLang] = useState("en");
+
+  // Reflect the active Google Translate language in the dropdown
+  useEffect(() => {
+    setLang(getCurrentLang());
+  }, []);
   const cartCount = useStore((s) => s.cartCount());
   const wishlistCount = useStore((s) => s.wishlist.length);
   const { theme, toggleTheme } = useThemeStore();
@@ -72,11 +76,13 @@ export function Header() {
           <select
             aria-label="Language"
             value={lang}
-            onChange={(e) => setLang(e.target.value)}
-            className="hidden rounded-card border border-mist bg-transparent px-2 py-1 text-xs font-semibold text-ink dark:border-edge dark:text-bone sm:block"
+            onChange={(e) => setLanguage(e.target.value)}
+            className="notranslate hidden rounded-card border border-mist bg-transparent px-2 py-1 text-xs font-semibold text-ink dark:border-edge dark:text-bone sm:block"
           >
             {LANGUAGES.map((l) => (
-              <option key={l}>{l}</option>
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
             ))}
           </select>
 
