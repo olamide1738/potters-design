@@ -82,7 +82,11 @@ export function HeroCarousel() {
             )}
           >
             <Link to={`/shop/${s.slug}`} aria-label={s.headline} className="absolute inset-0 block">
-              <img src={s.image} alt="" className="h-full w-full object-cover object-[right_top]" />
+              <img
+                src={s.image}
+                alt=""
+                className="h-full w-full origin-[20%_18%] scale-[1.32] object-cover object-top"
+              />
             </Link>
             <div
               aria-hidden
