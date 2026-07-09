@@ -7,4 +7,8 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  server: {
+    // Honour the PORT env var (used by the preview harness) when provided
+    port: process.env.PORT ? Number(process.env.PORT) : 5173,
+  },
 });
