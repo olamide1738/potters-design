@@ -18,6 +18,7 @@ declare global {
   }
 }
 import { useStore } from "@/store/useStore";
+import { useToastStore } from "@/store/useToastStore";
 import { PRODUCTS } from "@/data/products";
 import { formatPrice } from "@/lib/format";
 import {
@@ -145,6 +146,8 @@ export function CheckoutPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [paystackLoaded, setPaystackLoaded] = useState(false);
+  const [paystackLoadFailed, setPaystackLoadFailed] = useState(false);
+  const addToast = useToastStore((s) => s.addToast);
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "paystack">("bank");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -161,16 +164,29 @@ export function CheckoutPage() {
     }
   }, [form.countryCode]);
 
-  // Load Paystack inline.js once
-  useEffect(() => {
-    const existing = document.getElementById("paystack-inline");
-    if (existing) { setPaystackLoaded(true); return; }
+  // Loads (or reloads) the Paystack inline widget. Safe to call more than
+  // once — it always tears down any stale/failed tag first.
+  const loadPaystackScript = () => {
+    if (window.PaystackPop) {
+      setPaystackLoaded(true);
+      return;
+    }
+    document.getElementById("paystack-inline")?.remove();
     const script = document.createElement("script");
     script.id = "paystack-inline";
     script.src = "https://js.paystack.co/v1/inline.js";
     script.async = true;
-    script.onload = () => setPaystackLoaded(true);
+    script.onload = () => {
+      setPaystackLoaded(true);
+      setPaystackLoadFailed(false);
+    };
+    script.onerror = () => setPaystackLoadFailed(true);
     document.body.appendChild(script);
+  };
+
+  useEffect(() => {
+    loadPaystackScript();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch live rates once
@@ -306,33 +322,51 @@ export function CheckoutPage() {
     if (!allFilled) return;
 
     if (paymentMethod === "paystack") {
-      if (!window.PaystackPop) return;
-      const orderData = buildOrderPayload();
-      const ref = `PD-${Date.now()}`;
-      const handler = window.PaystackPop.setup({
-        key: "pk_live_bd55418082459fe2f518a87d043323461a3d029a",
-        email: form.email,
-        amount: Math.round(total * 100),
-        currency: "NGN",
-        ref,
-        callback: async (response) => {
-          setSubmitting(true);
-          try {
-            const orderId = await verifyAndSavePaystackOrder(response.reference, orderData);
-            navigate("/order-confirmation", {
-              state: { orderId, paymentMethod: "paystack", email: form.email },
-            });
-          } catch {
-            setSubmitting(false);
-            // Payment verified on Paystack but backend save failed — surface reference
-            navigate("/order-confirmation", {
-              state: { orderId: response.reference, paymentMethod: "paystack", email: form.email },
-            });
-          }
-        },
-        onClose: () => {},
-      });
-      handler.openIframe();
+      if (!window.PaystackPop) {
+        // Script never finished loading (slow network, blocked by an ad-blocker,
+        // etc). Give the user real feedback instead of doing nothing, and retry
+        // the load so a second click has a chance of working.
+        addToast("Payment couldn't start — please try again in a moment.");
+        setPaystackLoadFailed(true);
+        loadPaystackScript();
+        return;
+      }
+
+      try {
+        const orderData = buildOrderPayload();
+        const ref = `PD-${Date.now()}`;
+        const handler = window.PaystackPop.setup({
+          key: "pk_live_bd55418082459fe2f518a87d043323461a3d029a",
+          email: form.email,
+          amount: Math.round(total * 100),
+          currency: "NGN",
+          ref,
+          // Paystack's SDK rejects async functions here ("Attribute callback
+          // must be a valid function") — must be a plain function that
+          // kicks off the async work itself, not one that returns a Promise.
+          callback: (response) => {
+            setSubmitting(true);
+            verifyAndSavePaystackOrder(response.reference, orderData)
+              .then((orderId) => {
+                navigate("/order-confirmation", {
+                  state: { orderId, paymentMethod: "paystack", email: form.email },
+                });
+              })
+              .catch(() => {
+                setSubmitting(false);
+                // Payment verified on Paystack but backend save failed — surface reference
+                navigate("/order-confirmation", {
+                  state: { orderId: response.reference, paymentMethod: "paystack", email: form.email },
+                });
+              });
+          },
+          onClose: () => {},
+        });
+        handler.openIframe();
+      } catch (err) {
+        console.error("Paystack initialization failed:", err);
+        addToast("Payment couldn't start. Please refresh the page and try again.");
+      }
       return;
     }
 
@@ -672,9 +706,21 @@ export function CheckoutPage() {
                   <p className="text-ink/70 dark:text-bone/70">
                     Complete your payment securely with card, bank transfer, or USSD via Paystack.
                   </p>
-                  {!paystackLoaded && (
+                  {!paystackLoaded && !paystackLoadFailed && (
                     <p className="mt-2 text-xs text-ink/40 dark:text-bone/40">
                       Loading secure payment…
+                    </p>
+                  )}
+                  {paystackLoadFailed && !paystackLoaded && (
+                    <p className="mt-2 text-xs text-sale">
+                      Couldn&rsquo;t load the payment gateway.{" "}
+                      <button
+                        type="button"
+                        onClick={loadPaystackScript}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        Retry
+                      </button>
                     </p>
                   )}
                 </div>
