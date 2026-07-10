@@ -56,9 +56,9 @@ export function Footer() {
           title="Shop"
           links={[
             { label: "All products", to: "/shop" },
-            { label: "Dresses", to: "/shop" },
-            { label: "2-pieces", to: "/shop" },
-            { label: "New arrivals", to: "/shop" },
+            { label: "Dresses", to: "/shop?category=Dresses" },
+            { label: "Bubu", to: "/shop?category=Bubu" },
+            { label: "New arrivals", to: "/shop?sort=newest" },
           ]}
         />
         <FooterCol

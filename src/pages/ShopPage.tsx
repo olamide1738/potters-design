@@ -5,7 +5,10 @@ import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
 import { PRODUCTS } from "@/data/products";
 import { priceCeil, priceFloor } from "@/lib/format";
-import type { ShopFilterState, SortKey } from "@/types";
+import type { ProductCategory, ShopFilterState, SortKey } from "@/types";
+
+const VALID_CATEGORIES: ProductCategory[] = ["2-pieces", "Bubu", "Dresses", "Pants", "Skirt", "Top"];
+const VALID_SORTS: SortKey[] = ["default", "newest", "price-asc", "price-desc", "name-asc"];
 
 const INITIAL: ShopFilterState = {
   search: "",
@@ -31,13 +34,38 @@ const SORTS: { key: SortKey; label: string }[] = [
 export function ShopPage() {
   const [searchParams] = useSearchParams();
   const qParam = searchParams.get("q") ?? "";
-  const [filters, setFilters] = useState<ShopFilterState>({ ...INITIAL, search: qParam });
+  const categoryParam = searchParams.get("category");
+  const sortParam = searchParams.get("sort");
+
+  const categoryFromUrl =
+    categoryParam && VALID_CATEGORIES.includes(categoryParam as ProductCategory)
+      ? [categoryParam as ProductCategory]
+      : [];
+  const sortFromUrl =
+    sortParam && VALID_SORTS.includes(sortParam as SortKey) ? (sortParam as SortKey) : "default";
+
+  const [filters, setFilters] = useState<ShopFilterState>({
+    ...INITIAL,
+    search: qParam,
+    categories: categoryFromUrl,
+    sort: sortFromUrl,
+  });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Sync when arriving via a new "?q=" (e.g. from the header search)
+  // Re-derive the full filter state whenever the URL's own query params
+  // change (e.g. clicking a footer/search link) — a fresh link should show a
+  // fresh view, not merge with whatever filters were set before navigating.
+  // This does NOT re-run on manual sidebar edits, since those never touch
+  // the URL.
   useEffect(() => {
-    if (qParam) setFilters((f) => ({ ...f, search: qParam }));
-  }, [qParam]);
+    setFilters({
+      ...INITIAL,
+      search: qParam,
+      categories: categoryFromUrl,
+      sort: sortFromUrl,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qParam, categoryParam, sortParam]);
 
   const priceBounds = useMemo<[number, number]>(() => {
     const lows = PRODUCTS.map((p) => priceFloor(p.price));
