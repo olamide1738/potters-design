@@ -14,23 +14,23 @@ export function HeroVideo() {
   }, []);
 
   return (
-    <section className="relative w-full aspect-[3/2] bg-ink overflow-hidden">
-      {/* HTML5 background video loop */}
+    <section className="relative w-full bg-ink overflow-hidden">
+      {/* HTML5 background video loop - native dimensions define container height */}
       <video
         ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 h-full w-full object-cover object-center"
-        src="https://res.cloudinary.com/dklslzrkg/video/upload/IMG_8448_3-2_cuounq.mp4"
+        className="w-full h-auto block"
+        src="https://res.cloudinary.com/dklslzrkg/video/upload/IMG_8448_2_jowcy6.mp4"
       />
       
       {/* Fallback overlay block */}
-      <div className="absolute inset-0 bg-black/45" />
+      <div className="absolute inset-0 bg-black/45 z-10" />
 
       {/* Hero content layer */}
-      <div className="relative z-10 flex h-full items-center justify-center">
+      <div className="absolute inset-0 z-20 flex items-center justify-center">
         <div className="shell text-center text-bone px-4">
           <div className="mx-auto max-w-3xl">
             <span className="eyebrow tracking-[0.2em] text-gold uppercase text-[10px] sm:text-xs">
