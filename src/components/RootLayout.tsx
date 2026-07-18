@@ -27,10 +27,10 @@ export function RootLayout() {
   // Audio Engine Effect
   useEffect(() => {
     if (!audioRef.current) {
-      // Low-key ambient track
-      audioRef.current = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3");
+      // Relaxing ambient shopping music (royalty-free)
+      audioRef.current = new Audio("https://cdn.pixabay.com/audio/2024/11/28/audio_3857c1c885.mp3");
       audioRef.current.loop = true;
-      audioRef.current.volume = 0.2;
+      audioRef.current.volume = 0.15;
     }
 
     if (musicPlaying) {
