@@ -27,8 +27,8 @@ export function RootLayout() {
   // Audio Engine Effect
   useEffect(() => {
     if (!audioRef.current) {
-      // Relaxing ambient shopping music (royalty-free)
-      audioRef.current = new Audio("https://cdn.pixabay.com/audio/2024/11/28/audio_3857c1c885.mp3");
+      // Relaxing ambient lofi shopping music served locally to prevent CORS block issues
+      audioRef.current = new Audio("/music.mp3");
       audioRef.current.loop = true;
       audioRef.current.volume = 0.15;
     }
