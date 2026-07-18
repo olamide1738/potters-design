@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { HeroCarousel } from "@/components/HeroCarousel";
+import { HeroVideo } from "@/components/HeroVideo";
 import { FeatureGrid, MarqueeStrip } from "@/components/Sections";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
@@ -11,7 +11,7 @@ export function HomePage() {
 
   return (
     <>
-      <HeroCarousel />
+      <HeroVideo />
 
       {/* Popular products */}
       <section className="shell py-20">
