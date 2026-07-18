@@ -24,120 +24,85 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* Who We Are */}
-      <AboutSection
-        heading="Who We Are"
-        tagline="At Potters Design, we don't just create clothing—we shape identity."
-        image="/images/products/awero-1.jpg"
-        imageAlt="Potters Design — Awero"
-      >
-        <p>
-          Born from a desire to redefine modern fashion, Potters Design exists at the
-          intersection of craft, culture, and contemporary expression. Every piece we
-          create is a reflection of individuality&mdash;designed for those who
-          don&rsquo;t follow trends, but set them.
-        </p>
-      </AboutSection>
-
-      {/* Our Philosophy */}
-      <AboutSection
-        heading="Our Philosophy"
-        tagline="Where heritage meets bold expression."
-        image="/images/products/asiwaju-1.jpg"
-        imageAlt="Potters Design — Asiwaju"
-        reverse
-      >
-        <p>
-          We believe fashion should tell a story&mdash;one that blends timeless inspiration
-          with forward-thinking design. Much like the art of craftsmanship itself, true
-          style is intentional, expressive, and unapologetically original.
-        </p>
-        <p>
-          Our collections are built on this idea: to merge classic influences with modern
-          silhouettes, creating pieces that feel both familiar and refreshingly new.
-        </p>
-      </AboutSection>
-
       {/* What We Do */}
       <AboutSection
         heading="What We Do"
-        tagline="We design and curate fashion that empowers confidence."
+        tagline="Potter's Design is a premium fashion house from Nigeria creating contemporary fashion that reimagines African heritage through the language of modern design."
         image="/images/products/omidan-1.webp"
         imageAlt="Potters Design — Omidan"
       >
         <p>
-          From everyday essentials to statement pieces, every item is crafted with
-          attention to:
+          We exist to celebrate the beauty, strength, creativity, and excellence that have always existed within Africa, revealing Africa's enduring story through exceptional craftsmanship, thoughtful design, and timeless elegance.
         </p>
+        <p>
+          Inspired by our rich artistic traditions, indigenous textiles, and cultural legacy, we create collections that honour the past while shaping the future of African fashion.
+        </p>
+        <p>
+          Every garment is meticulously crafted for the modern woman, one who values authenticity, sophistication, and enduring style.
+        </p>
+        <p className="font-semibold text-ink dark:text-bone">
+          Our work is not simply inspired by Africa. It is designed to define the future of African fashion.
+        </p>
+      </AboutSection>
+
+      {/* Who We Are */}
+      <AboutSection
+        heading="Who We Are"
+        tagline="We are custodians of heritage."
+        image="/images/products/awero-1.jpg"
+        imageAlt="Potters Design — Awero"
+        reverse
+      >
         <ul className="space-y-3">
           {[
-            ["Detail", "precision in design and finishing"],
-            ["Quality", "materials that stand the test of time"],
-            ["Versatility", "pieces that move with your lifestyle"],
-          ].map(([title, body]) => (
-            <li key={title} className="flex gap-3">
+            "We are craftsmen.",
+            "We are custodians of heritage.",
+            "We are storytellers through design.",
+            "We are committed to excellence without compromise.",
+            "We are proudly African and confidently global.",
+            "We are Potter's Design."
+          ].map((line, idx) => (
+            <li key={idx} className="flex items-start gap-3">
               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
-              <span>
-                <span className="font-semibold text-ink dark:text-bone">{title}:</span> {body}
+              <span className={idx === 5 ? "font-semibold text-ink dark:text-bone" : ""}>
+                {line}
               </span>
             </li>
           ))}
         </ul>
-        <p className="font-semibold text-ink dark:text-bone">Our Goal is Simple</p>
-        <p>To make you look good, feel confident, and express yourself effortlessly.</p>
       </AboutSection>
 
       {/* Our Vision */}
       <AboutSection
         heading="Our Vision"
-        tagline="To become a defining voice in modern fashion—where creativity, culture, and innovation collide."
+        tagline="Born in Africa, recognized globally."
         image="/images/products/bewaji-1.jpg"
         imageAlt="Potters Design — Bewaji"
-        reverse
       >
         <p>
-          We are building more than a brand. We are building a movement for individuals who
-          see fashion as a form of identity and self-expression.
-        </p>
-      </AboutSection>
-
-      {/* Why Potters Design */}
-      <AboutSection
-        heading="Why Potters Design?"
-        tagline="Because style is personal."
-        image="/images/products/asiwaju-2.jpg"
-        imageAlt="Potters Design — Asiwaju"
-      >
-        <p>
-          In a world of fast fashion and fleeting trends, Potters Design stands for
-          intentional style&mdash;pieces designed with meaning, made to last, and created
-          to stand out.
+          To build one of the world's most respected fashion brand, born in Africa and recognised globally for exceptional craftsmanship, timeless design, and a new expression of African excellence.
         </p>
       </AboutSection>
 
       {/* Our Promise */}
       <AboutSection
         heading="Our Promise"
+        tagline="Excellence is the foundation of everything we create."
         image="/images/products/morewa-1.jpg"
         imageAlt="Potters Design — Morewa"
         reverse
       >
-        <p>We are committed to:</p>
-        <ul className="space-y-3">
-          {[
-            "Delivering quality without compromise",
-            "Staying authentic to our creative vision",
-            "Continuously evolving with our community",
-          ].map((p) => (
-            <li key={p} className="flex items-start gap-3">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
-              {p}
-            </li>
-          ))}
-        </ul>
-        <p className="font-display text-lg italic text-ink/80 dark:text-bone/80">
-          Because at Potters Design, it&rsquo;s not just about what you wear&mdash;it&rsquo;s
-          about how you show up.
+        <p>
+          Every garment is thoughtfully conceived, meticulously crafted, and finished to the highest standard. From the first sketch to the final stitch, every detail reflects our unwavering pursuit of quality, beauty, and precision.
+        </p>
+        <p>
+          We believe true luxury is defined not only by aesthetics but by craftsmanship, authenticity, and purpose.
+        </p>
+        <p>
+          Our work challenges outdated perceptions of African fashion and presents a different reality, one where African design is celebrated for its innovation, sophistication, and world-class quality.
+        </p>
+        <p className="font-display text-lg italic text-ink/80 dark:text-bone/80 mt-6">
+          We do not seek a place on the global stage. We belong there.
         </p>
       </AboutSection>
     </>
