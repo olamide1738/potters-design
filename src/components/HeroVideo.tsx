@@ -10,7 +10,7 @@ export function HeroVideo() {
         muted
         playsInline
         className="absolute inset-0 h-full w-full object-cover object-center"
-        src="https://assets.mixkit.co/videos/preview/mixkit-woman-modeling-a-short-black-dress-805-large.mp4"
+        src="https://res.cloudinary.com/dklslzrkg/video/upload/IMG_8448_3-2_cuounq.mp4"
       />
       
       {/* Fallback overlay block */}
