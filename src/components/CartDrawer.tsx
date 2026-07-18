@@ -87,7 +87,7 @@ export function CartDrawer() {
               <ul className="divide-y divide-mist dark:divide-edge">
                 {cart.map((line) => (
                   <li
-                    key={`${line.productId}-${line.size}-${line.color}`}
+                    key={`${line.productId}-${line.size}-${line.color}-${line.length}`}
                     className="flex gap-4 py-5"
                   >
                     <Link
@@ -115,9 +115,9 @@ export function CartDrawer() {
                           >
                             {line.name}
                           </Link>
-                          {(line.size || line.color) && (
+                          {(line.size || line.color || line.length) && (
                             <p className="mt-0.5 text-xs text-ink/50 dark:text-bone/50">
-                              {[line.size, line.color].filter(Boolean).join(" / ")}
+                              {[line.size, line.color, line.length].filter(Boolean).join(" / ")}
                             </p>
                           )}
                           <p className="mt-1 text-sm font-semibold">
@@ -136,6 +136,7 @@ export function CartDrawer() {
                                 line.quantity - 1,
                                 line.size,
                                 line.color,
+                                line.length,
                               )
                             }
                             className="px-2.5 py-1.5 text-base leading-none hover:text-gold"
@@ -153,6 +154,7 @@ export function CartDrawer() {
                                 line.quantity + 1,
                                 line.size,
                                 line.color,
+                                line.length,
                               )
                             }
                             className="px-2.5 py-1.5 text-base leading-none hover:text-gold"
@@ -166,6 +168,7 @@ export function CartDrawer() {
                               line.productId,
                               line.size,
                               line.color,
+                              line.length,
                             )
                           }
                           className="text-xs text-ink/40 underline underline-offset-4 transition-colors hover:text-ink dark:text-bone/40 dark:hover:text-bone"

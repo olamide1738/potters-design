@@ -824,7 +824,7 @@ export function CheckoutPage() {
           <ul className="mt-5 divide-y divide-mist dark:divide-edge">
             {cart.map((line) => (
               <li
-                key={`${line.productId}-${line.size}-${line.color}`}
+                key={`${line.productId}-${line.size}-${line.color}-${line.length}`}
                 className="flex items-start gap-3 py-4"
               >
                 <div className="relative shrink-0">

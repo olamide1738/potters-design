@@ -25,6 +25,7 @@ export function ProductPage() {
   const addToCart = useStore((s) => s.addToCart);
   const addToast = useToastStore((s) => s.addToast);
   const [size, setSize] = useState<string>();
+  const [length, setLength] = useState<string>();
   const [color, setColor] = useState<string>();
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
@@ -78,8 +79,9 @@ export function ProductPage() {
 
   const needsSize = product.sizes.length > 0 && product.sizes[0] !== "Free Size";
   const needsColor = product.colors.length > 0;
+  const needsLength = ["dresses", "pants", "2-pieces"].includes(product.category.toLowerCase());
   const canAdd =
-    product.inStock && (!needsSize || size) && (!needsColor || color);
+    product.inStock && (!needsSize || size) && (!needsColor || color) && (!needsLength || length);
 
   const related = products.filter(
     (p) => p.category === product.category && p.id !== product.id,
@@ -87,7 +89,7 @@ export function ProductPage() {
 
   const handleAdd = () => {
     setAdding(true);
-    addToCart(product, { size, color, quantity: qty });
+    addToCart(product, { size, color, length, quantity: qty });
     addToast("Added to cart");
     setTimeout(() => setAdding(false), 700);
   };
@@ -283,6 +285,38 @@ export function ProductPage() {
             </div>
           )}
 
+          {/* Length */}
+          {needsLength && (
+            <div className="mt-6">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-semibold">
+                  Length
+                  {length && (
+                    <span className="ml-1 font-normal text-ink/50 dark:text-bone/50">
+                      · {length}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["Short", "Regular", "Tall"].map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLength(l)}
+                    className={cn(
+                      "min-w-16 rounded-card border px-3 py-2 text-sm transition-colors",
+                      length === l
+                        ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
+                        : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
+                    )}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!needsSize && product.sizes[0] === "Free Size" && (
             <p className="mt-6 text-sm text-ink/60 dark:text-bone/60">
               <span className="font-semibold text-ink dark:text-bone">One size</span>{" "}
@@ -309,9 +343,13 @@ export function ProductPage() {
           {!canAdd && product.inStock && (
             <p className="mt-3 text-xs text-gold">
               Select{" "}
-              {[needsColor && !color && "a colour", needsSize && !size && "a size"]
+              {[needsColor && !color && "a colour", needsSize && !size && "a size", needsLength && !length && "a length"]
                 .filter(Boolean)
-                .join(" and ")}{" "}
+                .reduce((acc, curr, i, arr) => {
+                  if (i === 0) return curr;
+                  if (i === arr.length - 1) return `${acc} and ${curr}`;
+                  return `${acc}, ${curr}`;
+                }, "")}{" "}
               to continue.
             </p>
           )}
@@ -464,7 +502,7 @@ export function ProductPage() {
           )}
 
           {activeTab === "ordering" && (
-            <div className="space-y-8">
+            <div className="space-y-8 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
               <Section title="Order processing">
                 <p>
                   Most of our pieces are made-to-order and produced after purchase
@@ -518,7 +556,7 @@ export function ProductPage() {
           )}
 
           {activeTab === "shipping" && (
-            <div className="space-y-8">
+            <div className="space-y-8 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
               <Section title="Shipping">
                 <p>
                   Shipping costs are calculated based on the weight of your order

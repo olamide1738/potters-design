@@ -8,9 +8,9 @@ interface StoreState {
   wishlist: number[];
   compare: number[];
 
-  addToCart: (product: Product, opts?: { size?: string; color?: string; quantity?: number }) => void;
-  removeFromCart: (productId: number, size?: string, color?: string) => void;
-  setQuantity: (productId: number, quantity: number, size?: string, color?: string) => void;
+  addToCart: (product: Product, opts?: { size?: string; color?: string; length?: string; quantity?: number }) => void;
+  removeFromCart: (productId: number, size?: string, color?: string, length?: string) => void;
+  setQuantity: (productId: number, quantity: number, size?: string, color?: string, length?: string) => void;
   clearCart: () => void;
 
   toggleWishlist: (productId: number) => void;
@@ -20,8 +20,8 @@ interface StoreState {
   cartSubtotal: () => number;
 }
 
-const sameLine = (l: CartLine, productId: number, size?: string, color?: string) =>
-  l.productId === productId && l.size === size && l.color === color;
+const sameLine = (l: CartLine, productId: number, size?: string, color?: string, length?: string) =>
+  l.productId === productId && l.size === size && l.color === color && l.length === length;
 
 export const useStore = create<StoreState>()(
   persist(
@@ -32,12 +32,12 @@ export const useStore = create<StoreState>()(
 
       addToCart: (product, opts = {}) =>
         set((state) => {
-          const { size, color, quantity = 1 } = opts;
-          const existing = state.cart.find((l) => sameLine(l, product.id, size, color));
+          const { size, color, length, quantity = 1 } = opts;
+          const existing = state.cart.find((l) => sameLine(l, product.id, size, color, length));
           if (existing) {
             return {
               cart: state.cart.map((l) =>
-                sameLine(l, product.id, size, color)
+                sameLine(l, product.id, size, color, length)
                   ? { ...l, quantity: l.quantity + quantity }
                   : l,
               ),
@@ -51,21 +51,22 @@ export const useStore = create<StoreState>()(
             image: product.image,
             size,
             color,
+            length,
             quantity,
           };
           return { cart: [...state.cart, line] };
         }),
 
-      removeFromCart: (productId, size, color) =>
+      removeFromCart: (productId, size, color, length) =>
         set((state) => ({
-          cart: state.cart.filter((l) => !sameLine(l, productId, size, color)),
+          cart: state.cart.filter((l) => !sameLine(l, productId, size, color, length)),
         })),
 
-      setQuantity: (productId, quantity, size, color) =>
+      setQuantity: (productId, quantity, size, color, length) =>
         set((state) => ({
           cart: state.cart
             .map((l) =>
-              sameLine(l, productId, size, color)
+              sameLine(l, productId, size, color, length)
                 ? { ...l, quantity: Math.max(1, quantity) }
                 : l,
             )

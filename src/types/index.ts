@@ -54,6 +54,7 @@ export interface CartLine {
   image: string;
   size?: string;
   color?: string;
+  length?: string;
   quantity: number;
 }
 
