@@ -14,15 +14,15 @@ export function HeroVideo() {
   }, []);
 
   return (
-    <section className="relative h-[80vh] min-h-[500px] w-full overflow-hidden bg-ink lg:h-[88vh] lg:min-h-[600px]">
-      {/* HTML5 background video loop */}
+    <section className="relative w-full bg-ink overflow-hidden">
+      {/* HTML5 background video loop - native dimensions define container height */}
       <video
         ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
+        className="w-full h-auto block"
         src="https://res.cloudinary.com/dklslzrkg/video/upload/IMG_8448_2_jowcy6.mp4"
       />
       
