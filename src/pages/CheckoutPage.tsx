@@ -19,12 +19,9 @@ declare global {
 }
 import { useStore } from "@/store/useStore";
 import { useToastStore } from "@/store/useToastStore";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { formatPrice } from "@/lib/format";
-import {
-  computeDeliveryTimeline,
-  formatDeliveryDate,
-} from "@/lib/delivery";
+
 import {
   SHIPPING_COUNTRIES,
   COUNTRY_MAP,
@@ -116,16 +113,17 @@ export function CheckoutPage() {
   const cart = useStore((s) => s.cart);
   const subtotal = useStore((s) => s.cartSubtotal());
   const navigate = useNavigate();
+  const products = useProducts();
 
   // Auto-calculate shipping weight from cart (product weight incl. packaging)
   const weightKg = useMemo(() => {
     const total = cart.reduce((acc, line) => {
-      const product = PRODUCTS.find((p) => p.id === line.productId);
+      const product = products.find((p) => p.id === line.productId);
       const unitWeight = product?.shippingWeightKg ?? 1.2;
       return acc + line.quantity * unitWeight;
     }, 0);
     return Math.max(0.5, Math.round(total * 10) / 10);
-  }, [cart]);
+  }, [cart, products]);
 
   const [currency, setCurrency] = useState("NGN");
   const [ratesState, setRatesState] = useState<RatesState>({
@@ -228,8 +226,7 @@ export function CheckoutPage() {
   const shippingFee = isPickup ? 0 : isDomestic ? (domesticRate?.fee ?? null) : intlFee;
   const total = subtotal + (shippingFee ?? 0);
 
-  // Delivery timeline for order summary
-  const timeline = computeDeliveryTimeline();
+
 
   // Build currency dropdown — always include the active currency even if not in base list
   const currencyOptions = useMemo(() => {
@@ -843,11 +840,6 @@ export function CheckoutPage() {
                 <div className="flex flex-1 justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium leading-snug">{line.name}</p>
-                    {(line.size || line.color) && (
-                      <p className="mt-0.5 text-xs text-ink/50 dark:text-bone/50">
-                        {[line.size, line.color].filter(Boolean).join(" / ")}
-                      </p>
-                    )}
                   </div>
                   <p className="shrink-0 font-mono text-sm font-semibold">
                     {convert(line.unitPrice * line.quantity)}
@@ -929,41 +921,7 @@ export function CheckoutPage() {
           {/* Delivery timeline */}
           <div className="mt-4 border-t border-mist pt-4 dark:border-edge">
             <p className="text-[11px] text-ink/50 dark:text-bone/50">
-              {isPickup ? (
-                <>
-                  <span className="font-semibold text-ink dark:text-bone">
-                    Pick up:
-                  </span>{" "}
-                  Usually ready within 24 hours. We'll notify you when your
-                  order is ready to collect.
-                </>
-              ) : timeline.hoursLeft !== null && timeline.hoursLeft > 0 ? (
-                <>
-                  Order in the next{" "}
-                  <span className="font-semibold text-ink dark:text-bone">
-                    {timeline.hoursLeft}h {timeline.minsLeft}m
-                  </span>{" "}
-                  for estimated delivery{" "}
-                  <span className="font-semibold text-ink dark:text-bone">
-                    {formatDeliveryDate(timeline.earliest)}
-                  </span>{" "}
-                  –{" "}
-                  <span className="font-semibold text-ink dark:text-bone">
-                    {formatDeliveryDate(timeline.latest)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  Estimated delivery:{" "}
-                  <span className="font-semibold text-ink dark:text-bone">
-                    {formatDeliveryDate(timeline.earliest)}
-                  </span>{" "}
-                  –{" "}
-                  <span className="font-semibold text-ink dark:text-bone">
-                    {formatDeliveryDate(timeline.latest)}
-                  </span>
-                </>
-              )}
+              We would notify you when your order is ready for pick up
             </p>
           </div>
         </aside>

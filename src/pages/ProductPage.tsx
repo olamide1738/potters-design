@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getProductBySlug, PRODUCTS } from "@/data/products";
+import { useProducts, useProductBySlug } from "@/store/useProductStore";
 import { useStore } from "@/store/useStore";
 import { useToastStore } from "@/store/useToastStore";
 import { cn, formatProductPrice } from "@/lib/format";
@@ -19,7 +19,8 @@ type Tab = "description" | "ordering" | "shipping";
 export function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const product = slug ? getProductBySlug(slug) : undefined;
+  const products = useProducts();
+  const product = useProductBySlug(slug);
 
   const addToCart = useStore((s) => s.addToCart);
   const addToast = useToastStore((s) => s.addToast);
@@ -80,7 +81,7 @@ export function ProductPage() {
   const canAdd =
     product.inStock && (!needsSize || size) && (!needsColor || color);
 
-  const related = PRODUCTS.filter(
+  const related = products.filter(
     (p) => p.category === product.category && p.id !== product.id,
   ).slice(0, 4);
 
@@ -321,8 +322,7 @@ export function ProductPage() {
               <CheckCircleIcon />
               <div className="flex-1">
                 <p className="text-sm">
-                  Pickup available at{" "}
-                  <span className="font-semibold">Potter's Design Studio</span>
+                  Pickup available
                   <span className="ml-2 text-ink/50 dark:text-bone/50">
                     — Usually ready in 24 hours
                   </span>
@@ -338,9 +338,6 @@ export function ProductPage() {
                     <p className="font-semibold text-ink dark:text-bone">Potter's Design</p>
                     <p>No 4, Akinsanmi Street</p>
                     <p>Obanikoro Estate, Mainland Lagos</p>
-                    <p className="mt-2 text-ink/50 dark:text-bone/50">
-                      Monday – Saturday · 9:00 AM – 6:00 PM
-                    </p>
                   </div>
                 )}
               </div>

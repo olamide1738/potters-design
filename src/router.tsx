@@ -11,6 +11,10 @@ import { FAQPage } from "./pages/FAQPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { OrderConfirmation } from "./pages/OrderConfirmation";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { AdminLayout } from "./pages/admin/AdminLayout";
+import { AdminLoginPage } from "./pages/admin/AdminLoginPage";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { RequireAuth } from "./pages/admin/RequireAuth";
 
 export const router = createBrowserRouter([
   {
@@ -29,6 +33,15 @@ export const router = createBrowserRouter([
       { path: "checkout", element: <CheckoutPage /> },
       { path: "order-confirmation", element: <OrderConfirmation /> },
       { path: "*", element: <NotFoundPage /> },
+    ],
+  },
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    errorElement: <NotFoundPage />,
+    children: [
+      { path: "login", element: <AdminLoginPage /> },
+      { index: true, element: <RequireAuth><AdminDashboard /></RequireAuth> },
     ],
   },
 ]);

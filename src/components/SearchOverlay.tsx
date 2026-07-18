@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUIStore } from "@/store/useUIStore";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { formatProductPrice } from "@/lib/format";
 
 const MAX_RESULTS = 6;
@@ -13,18 +13,19 @@ export function SearchOverlay() {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const products = useProducts();
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return PRODUCTS.filter(
+    return products.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
         p.tags.some((t) => t.toLowerCase().includes(q)) ||
         p.colors.some((c) => c.toLowerCase().includes(q)),
     ).slice(0, MAX_RESULTS);
-  }, [query]);
+  }, [query, products]);
 
   // Reset + focus on open, lock scroll, esc to close
   useEffect(() => {

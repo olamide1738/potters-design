@@ -5,25 +5,25 @@ interface Props {
 
 // Straight sizes: XS–L (PD 4–14) · Plus sizes: L–2XL (PD 16–22)
 const DRESSES_TOPS = [
-  { label: "XS",  pd: "4",  uk: "6",  us: "2",  eu: "34", bust: "32 / 81",  waist: "24 / 61",  hip: "34 / 86" },
-  { label: "S",   pd: "6",  uk: "8",  us: "4",  eu: "36", bust: "34 / 86",  waist: "26 / 66",  hip: "36 / 91" },
-  { label: "S",   pd: "8",  uk: "10", us: "6",  eu: "38", bust: "36 / 91",  waist: "28 / 71",  hip: "38 / 97" },
-  { label: "M",   pd: "10", uk: "12", us: "8",  eu: "40", bust: "38 / 97",  waist: "30 / 76",  hip: "40 / 102" },
-  { label: "M",   pd: "12", uk: "14", us: "10", eu: "42", bust: "40 / 102", waist: "32 / 81",  hip: "42 / 107" },
-  { label: "L",   pd: "14", uk: "16", us: "12", eu: "44", bust: "42 / 107", waist: "34 / 86",  hip: "44 / 112" },
-  { label: "L",   pd: "16", uk: "18", us: "14", eu: "46", bust: "45 / 114", waist: "37 / 94",  hip: "47 / 119" },
-  { label: "XL",  pd: "18", uk: "20", us: "16", eu: "48", bust: "47 / 119", waist: "39 / 99",  hip: "49 / 125" },
-  { label: "XL",  pd: "20", uk: "22", us: "18", eu: "50", bust: "49 / 125", waist: "41 / 104", hip: "51 / 130" },
-  { label: "2XL", pd: "22", uk: "24", us: "20", eu: "52", bust: "51 / 129", waist: "43 / 109", hip: "53 / 135" },
+  { label: "XS",  pd: "4",  uk: "6",  us: "2",  eu: "34", bust: "32 / 81",  waist: "24 / 61",  hip: "34 / 86",  length: "36 / 91" },
+  { label: "S",   pd: "6",  uk: "8",  us: "4",  eu: "36", bust: "34 / 86",  waist: "26 / 66",  hip: "36 / 91",  length: "36.5 / 92" },
+  { label: "S",   pd: "8",  uk: "10", us: "6",  eu: "38", bust: "36 / 91",  waist: "28 / 71",  hip: "38 / 97",  length: "37 / 94" },
+  { label: "M",   pd: "10", uk: "12", us: "8",  eu: "40", bust: "38 / 97",  waist: "30 / 76",  hip: "40 / 102", length: "37.5 / 95" },
+  { label: "M",   pd: "12", uk: "14", us: "10", eu: "42", bust: "40 / 102", waist: "32 / 81",  hip: "42 / 107", length: "38 / 96" },
+  { label: "L",   pd: "14", uk: "16", us: "12", eu: "44", bust: "42 / 107", waist: "34 / 86",  hip: "44 / 112", length: "38.5 / 97" },
+  { label: "L",   pd: "16", uk: "18", us: "14", eu: "46", bust: "45 / 114", waist: "37 / 94",  hip: "47 / 119", length: "39 / 99" },
+  { label: "XL",  pd: "18", uk: "20", us: "16", eu: "48", bust: "47 / 119", waist: "39 / 99",  hip: "49 / 125", length: "39.5 / 100" },
+  { label: "XL",  pd: "20", uk: "22", us: "18", eu: "50", bust: "49 / 125", waist: "41 / 104", hip: "51 / 130", length: "40 / 101" },
+  { label: "2XL", pd: "22", uk: "24", us: "20", eu: "52", bust: "51 / 129", waist: "43 / 109", hip: "53 / 135", length: "40.5 / 103" },
 ];
 
 const PANTS_TWO_PIECE = [
-  { label: "XS",  pd: "Size 4",       uk: "6",     us: "2",     eu: "34" },
-  { label: "S",   pd: "Size 6 – 8",   uk: "8–10",  us: "4–6",   eu: "36–38" },
-  { label: "M",   pd: "Size 10 – 12", uk: "12–14", us: "8–10",  eu: "40–42" },
-  { label: "L",   pd: "Size 14 – 16", uk: "16–18", us: "12–14", eu: "44–46" },
-  { label: "XL",  pd: "Size 18 – 20", uk: "20–22", us: "16–18", eu: "48–50" },
-  { label: "2XL", pd: "Size 22",      uk: "24",    us: "20",    eu: "52" },
+  { label: "XS",  pd: "Size 4",       uk: "6",     us: "2",     eu: "34", waist: "24 / 61",  hip: "34 / 86",  length: "38 / 96" },
+  { label: "S",   pd: "Size 6 – 8",   uk: "8–10",  us: "4–6",   eu: "36–38", waist: "26-28 / 66-71", hip: "36-38 / 91-97", length: "39 / 99" },
+  { label: "M",   pd: "Size 10 – 12", uk: "12–14", us: "8–10",  eu: "40–42", waist: "30-32 / 76-81", hip: "40-42 / 102-107", length: "40 / 101" },
+  { label: "L",   pd: "Size 14 – 16", uk: "16–18", us: "12–14", eu: "44–46", waist: "34-37 / 86-94", hip: "44-47 / 112-119", length: "41 / 104" },
+  { label: "XL",  pd: "Size 18 – 20", uk: "20–22", us: "16–18", eu: "48–50", waist: "39-41 / 99-104", hip: "49-51 / 125-130", length: "42 / 107" },
+  { label: "2XL", pd: "Size 22",      uk: "24",    us: "20",    eu: "52", waist: "43 / 109", hip: "53 / 135", length: "43 / 109" },
 ];
 
 export function SizeGuide({ isOpen, onClose }: Props) {
@@ -69,7 +69,7 @@ export function SizeGuide({ isOpen, onClose }: Props) {
               <table className="w-full min-w-[560px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b-2 border-mist dark:border-edge">
-                    {["Size", "PD", "UK", "US", "EU", "Bust", "Waist", "Hip"].map(
+                    {["Size", "PD", "UK", "US", "EU", "Bust", "Waist", "Hip", "Length"].map(
                       (h) => (
                         <th
                           key={h}
@@ -105,6 +105,9 @@ export function SizeGuide({ isOpen, onClose }: Props) {
                       <td className="px-3 py-2.5 font-mono text-xs">
                         {row.hip}
                       </td>
+                      <td className="px-3 py-2.5 font-mono text-xs">
+                        {row.length}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -122,11 +125,14 @@ export function SizeGuide({ isOpen, onClose }: Props) {
                 <thead>
                   <tr className="border-b-2 border-mist dark:border-edge">
                     {[
-                      "Size Label",
-                      "PD Equivalent",
+                      "Size",
+                      "PD",
                       "UK",
                       "US",
                       "EU",
+                      "Waist",
+                      "Hip",
+                      "Length",
                     ].map((h) => (
                       <th
                         key={h}
@@ -152,6 +158,15 @@ export function SizeGuide({ isOpen, onClose }: Props) {
                       <td className="px-3 py-2.5">{row.uk}</td>
                       <td className="px-3 py-2.5">{row.us}</td>
                       <td className="px-3 py-2.5">{row.eu}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs">
+                        {row.waist}
+                      </td>
+                      <td className="px-3 py-2.5 font-mono text-xs">
+                        {row.hip}
+                      </td>
+                      <td className="px-3 py-2.5 font-mono text-xs">
+                        {row.length}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

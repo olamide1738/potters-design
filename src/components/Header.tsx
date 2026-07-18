@@ -27,6 +27,8 @@ export function Header() {
   const { theme, toggleTheme } = useThemeStore();
   const toggleCart = useUIStore((s) => s.toggleCart);
   const toggleSearch = useUIStore((s) => s.toggleSearch);
+  const musicPlaying = useUIStore((s) => s.musicPlaying);
+  const toggleMusic = useUIStore((s) => s.toggleMusic);
 
   return (
     <header className="sticky top-0 z-40 border-b border-mist/70 bg-bone/90 backdrop-blur dark:border-edge/70 dark:bg-ink/90">
@@ -106,6 +108,27 @@ export function Header() {
           >
             <BagIcon />
             {cartCount > 0 && <Badge>{cartCount}</Badge>}
+          </button>
+
+          {/* Shopping Music Toggle */}
+          <button
+            aria-label={musicPlaying ? "Mute background music" : "Play background music"}
+            title={musicPlaying ? "Mute background music" : "Play background music"}
+            onClick={toggleMusic}
+            className="flex h-7 w-7 items-center justify-center p-1 text-ink hover:text-gold dark:text-bone dark:hover:text-gold"
+          >
+            {musicPlaying ? (
+              <div className="flex h-4 items-end gap-[3px]">
+                <span className="soundwave-bar animate-soundwave-1 h-3 w-[2px] bg-current rounded-full" />
+                <span className="soundwave-bar animate-soundwave-2 h-4 w-[2px] bg-current rounded-full" />
+                <span className="soundwave-bar animate-soundwave-3 h-2.5 w-[2px] bg-current rounded-full" />
+              </div>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+                <path d="M23 9l-6 6M17 9l6 6" />
+              </svg>
+            )}
           </button>
 
           {/* Theme toggle */}

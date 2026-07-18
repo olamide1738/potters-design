@@ -1,5 +1,6 @@
 import type { ProductCategory, ShopFilterState } from "@/types";
-import { CATEGORIES, PRODUCT_COLORS, PRODUCT_SIZES, PRODUCT_TAGS, PRODUCTS } from "@/data/products";
+import { CATEGORIES, PRODUCT_COLORS, PRODUCT_SIZES, PRODUCT_TAGS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { formatPrice } from "@/lib/format";
 
 const CATEGORY_DISPLAY: Record<ProductCategory, string> = {
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function ShopFilters({ filters, onChange, onReset, priceBounds }: Props) {
+  const products = useProducts();
   const toggle = <T,>(list: T[], value: T): T[] =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
@@ -80,7 +82,7 @@ export function ShopFilters({ filters, onChange, onReset, priceBounds }: Props) 
       {/* Categories */}
       <FilterBlock title="Product categories">
         {CATEGORIES.map((c) => {
-          const count = PRODUCTS.filter((p) => p.category === c).length;
+          const count = products.filter((p) => p.category === c).length;
           return (
             <Check
               key={c}

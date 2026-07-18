@@ -10,14 +10,48 @@ import { PromoPopup } from "./PromoPopup";
 import { BackToTop } from "./BackToTop";
 import { GoogleTranslate } from "./GoogleTranslate";
 import { useThemeStore } from "@/store/useThemeStore";
+import { useRef } from "react";
+import { useUIStore } from "@/store/useUIStore";
 
 export function RootLayout() {
   const theme = useThemeStore((s) => s.theme);
   const location = useLocation();
+  const musicPlaying = useUIStore((s) => s.musicPlaying);
+  const setMusicPlaying = useUIStore((s) => s.setMusicPlaying);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  // Audio Engine Effect
+  useEffect(() => {
+    if (!audioRef.current) {
+      // Low-key ambient track
+      audioRef.current = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3");
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.2;
+    }
+
+    if (musicPlaying) {
+      audioRef.current.play().catch((err) => {
+        console.warn("Autoplay blocked by browser. User interaction required.", err);
+        setMusicPlaying(false);
+      });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [musicPlaying, setMusicPlaying]);
+
+  // Clean up audio on page destroy
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">

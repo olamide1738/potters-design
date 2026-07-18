@@ -3,11 +3,11 @@ import { HeroCarousel } from "@/components/HeroCarousel";
 import { FeatureGrid, MarqueeStrip } from "@/components/Sections";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 
 export function HomePage() {
-  const popular = PRODUCTS;
-  const hotPicks = PRODUCTS.filter((p) => p.featured);
+  const popular = useProducts();
+  const hotPicks = popular.filter((p) => p.featured);
 
   return (
     <>

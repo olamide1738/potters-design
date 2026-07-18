@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ShopFilters } from "@/components/ShopFilters";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { priceCeil, priceFloor } from "@/lib/format";
 import type { ProductCategory, ShopFilterState, SortKey } from "@/types";
 
@@ -51,6 +51,7 @@ export function ShopPage() {
     sort: sortFromUrl,
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const products = useProducts();
 
   // Re-derive the full filter state whenever the URL's own query params
   // change (e.g. clicking a footer/search link) — a fresh link should show a
@@ -68,13 +69,13 @@ export function ShopPage() {
   }, [qParam, categoryParam, sortParam]);
 
   const priceBounds = useMemo<[number, number]>(() => {
-    const lows = PRODUCTS.map((p) => priceFloor(p.price));
-    const highs = PRODUCTS.map((p) => priceCeil(p.price));
+    const lows = products.map((p) => priceFloor(p.price));
+    const highs = products.map((p) => priceCeil(p.price));
     return [Math.min(...lows), Math.max(...highs)];
-  }, []);
+  }, [products]);
 
   const results = useMemo(() => {
-    let list = PRODUCTS.filter((p) => {
+    let list = products.filter((p) => {
       if (filters.search) {
         const q = filters.search.toLowerCase();
         const matches =
@@ -110,7 +111,7 @@ export function ShopPage() {
         break;
     }
     return list;
-  }, [filters]);
+  }, [filters, products]);
 
   const update = (next: Partial<ShopFilterState>) => setFilters((f) => ({ ...f, ...next }));
   const reset = () => setFilters(INITIAL);

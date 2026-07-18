@@ -10,6 +10,10 @@ interface UIState {
   openSearch: () => void;
   closeSearch: () => void;
   toggleSearch: () => void;
+
+  musicPlaying: boolean;
+  toggleMusic: () => void;
+  setMusicPlaying: (playing: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -22,4 +26,8 @@ export const useUIStore = create<UIState>((set) => ({
   openSearch: () => set({ searchOpen: true }),
   closeSearch: () => set({ searchOpen: false }),
   toggleSearch: () => set((s) => ({ searchOpen: !s.searchOpen })),
+
+  musicPlaying: false,
+  toggleMusic: () => set((s) => ({ musicPlaying: !s.musicPlaying })),
+  setMusicPlaying: (playing: boolean) => set({ musicPlaying: playing }),
 }));

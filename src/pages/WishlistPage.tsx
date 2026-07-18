@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { useStore } from "@/store/useStore";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { ProductCard } from "@/components/ProductCard";
 
 export function WishlistPage() {
   const wishlist = useStore((s) => s.wishlist);
-  const items = PRODUCTS.filter((p) => wishlist.includes(p.id));
+  const products = useProducts();
+  const items = products.filter((p) => wishlist.includes(p.id));
 
   return (
     <div className="shell py-16">

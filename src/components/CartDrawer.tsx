@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "@/store/useStore";
 import { useUIStore } from "@/store/useUIStore";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { formatPrice } from "@/lib/format";
 
 const PLACEHOLDER = "/hanger-placeholder.svg";
@@ -15,9 +15,10 @@ export function CartDrawer() {
   const removeFromCart = useStore((s) => s.removeFromCart);
   const subtotal = useStore((s) => s.cartSubtotal());
   const navigate = useNavigate();
+  const products = useProducts();
 
   const cartIds = new Set(cart.map((l) => l.productId));
-  const suggestions = PRODUCTS.filter((p) => !cartIds.has(p.id)).slice(0, 6);
+  const suggestions = products.filter((p) => !cartIds.has(p.id)).slice(0, 6);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

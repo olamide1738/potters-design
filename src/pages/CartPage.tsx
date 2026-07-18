@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "@/store/useStore";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/store/useProductStore";
 import { formatPrice } from "@/lib/format";
 
 export function CartPage() {
@@ -11,9 +11,10 @@ export function CartPage() {
   const subtotal = useStore((s) => s.cartSubtotal());
   const [agreed, setAgreed] = useState(false);
   const navigate = useNavigate();
+  const products = useProducts();
 
   const cartIds = new Set(cart.map((l) => l.productId));
-  const suggestions = PRODUCTS.filter((p) => !cartIds.has(p.id)).slice(0, 5);
+  const suggestions = products.filter((p) => !cartIds.has(p.id)).slice(0, 5);
 
   if (cart.length === 0) {
     return (
