@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 export function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   // Force autoplay on load to bypass browser autoplay blocks
   useEffect(() => {
@@ -13,8 +14,30 @@ export function HeroVideo() {
     }
   }, []);
 
+  // Scroll to center of hero section on mount
+  useEffect(() => {
+    const handleScrollToCenter = () => {
+      if (sectionRef.current) {
+        const rect = sectionRef.current.getBoundingClientRect();
+        // Since we are scrolling on mount, document scroll is 0, so rect.top is the offset.
+        // We want the center of the hero to line up with the center of the viewport.
+        const heroHeight = rect.height;
+        const windowHeight = window.innerHeight;
+        const scrollTarget = (heroHeight / 2) - (windowHeight / 2);
+        
+        window.scrollTo({
+          top: Math.max(0, scrollTarget),
+          behavior: "smooth",
+        });
+      }
+    };
+
+    const timer = setTimeout(handleScrollToCenter, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <section className="relative w-full bg-ink overflow-hidden">
+    <section ref={sectionRef} className="relative w-full bg-ink overflow-hidden">
       {/* HTML5 background video loop - native dimensions define container height */}
       <video
         ref={videoRef}
