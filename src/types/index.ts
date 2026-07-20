@@ -25,6 +25,11 @@ export interface Product {
   featured: boolean;
   /** true when the product has selectable variants ("Select options") */
   hasVariants: boolean;
+  /** Fine-grained stock toggling for variant options */
+  variantStock?: {
+    sizes?: Record<string, boolean>;
+    colors?: Record<string, boolean>;
+  };
   description?: string;
   fabric?: string;
   careInstructions?: string;
@@ -97,10 +102,13 @@ export interface OrderShipping {
   zip: string;
 }
 
+export type OrderProductionStatus = "pending" | "received" | "production" | "ready" | "completed";
+
 export interface Order {
   id: string;
   reference: string;
   status: OrderStatus;
+  productionStatus?: OrderProductionStatus;
   paymentMethod: PaymentMethod;
   customer: OrderCustomer;
   fulfillment: FulfillmentMethod;

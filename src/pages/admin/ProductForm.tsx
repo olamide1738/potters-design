@@ -65,6 +65,10 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
   );
   const [dimensions, setDimensions] = useState(initial?.dimensions ?? "");
   const [priceNote, setPriceNote] = useState(initial?.priceNote ?? "");
+  const [variantStock, setVariantStock] = useState<{
+    sizes?: Record<string, boolean>;
+    colors?: Record<string, boolean>;
+  }>(initial?.variantStock ?? {});
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -167,6 +171,9 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       ...(shippingWeightKg ? { shippingWeightKg: Number(shippingWeightKg) } : {}),
       ...(dimensions.trim() ? { dimensions: dimensions.trim() } : {}),
       ...(priceNote.trim() ? { priceNote: priceNote.trim() } : {}),
+      ...(Object.keys(variantStock.sizes ?? {}).length || Object.keys(variantStock.colors ?? {}).length
+        ? { variantStock }
+        : {}),
     };
 
     setSaving(true);
@@ -352,6 +359,71 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
           <CheckRow label="Featured" checked={featured} onChange={setFeatured} />
           <CheckRow label="Has variants" checked={hasVariants} onChange={setHasVariants} />
         </div>
+
+        {/* Variant Stock Control */}
+        {(sizes.length > 0 || colors.length > 0) && (
+          <div className="mt-4 rounded-card border border-mist p-4 dark:border-edge">
+            <span className="block text-sm font-semibold">Variant Stock Control</span>
+            {sizes.length > 0 && (
+              <div className="mt-3">
+                <span className="mb-1 block text-xs font-semibold text-ink/70 dark:text-bone/70">Sizes</span>
+                <div className="flex flex-wrap gap-3">
+                  {sizes.map((size) => {
+                    const inStockVal = variantStock.sizes?.[size] ?? true;
+                    return (
+                      <label key={size} className="flex items-center gap-1.5 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={inStockVal}
+                          onChange={() => {
+                            setVariantStock((prev) => ({
+                              ...prev,
+                              sizes: { ...prev.sizes, [size]: !(prev.sizes?.[size] ?? true) },
+                            }));
+                          }}
+                          className="h-4 w-4 accent-gold"
+                        />
+                        <span className="text-xs">{size}</span>
+                        {!inStockVal && (
+                          <span className="text-[10px] font-semibold text-sale">Out of stock</span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {colors.length > 0 && (
+              <div className="mt-3">
+                <span className="mb-1 block text-xs font-semibold text-ink/70 dark:text-bone/70">Colors</span>
+                <div className="flex flex-wrap gap-3">
+                  {colors.map((color) => {
+                    const inStockVal = variantStock.colors?.[color] ?? true;
+                    return (
+                      <label key={color} className="flex items-center gap-1.5 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={inStockVal}
+                          onChange={() => {
+                            setVariantStock((prev) => ({
+                              ...prev,
+                              colors: { ...prev.colors, [color]: !(prev.colors?.[color] ?? true) },
+                            }));
+                          }}
+                          className="h-4 w-4 accent-gold"
+                        />
+                        <span className="text-xs">{color}</span>
+                        {!inStockVal && (
+                          <span className="text-[10px] font-semibold text-sale">Out of stock</span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Details */}
         <Field label="Description" className="mt-4">

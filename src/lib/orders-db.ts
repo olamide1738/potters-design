@@ -7,7 +7,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Order, OrderStatus } from "@/types";
+import type { Order, OrderStatus, OrderProductionStatus } from "@/types";
 
 const COLLECTION = "orders";
 
@@ -47,4 +47,15 @@ export async function updateOrderStatus(
 ): Promise<void> {
   const ref = doc(db, COLLECTION, orderId);
   await updateDoc(ref, { status });
+}
+
+/**
+ * Update an order's production pipeline status in Firestore.
+ */
+export async function updateOrderProductionStatus(
+  orderId: string,
+  productionStatus: OrderProductionStatus,
+): Promise<void> {
+  const ref = doc(db, COLLECTION, orderId);
+  await updateDoc(ref, { productionStatus });
 }

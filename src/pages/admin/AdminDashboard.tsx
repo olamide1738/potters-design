@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Product, Order, OrderStatus } from "@/types";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import type { Product, Order, OrderStatus, OrderProductionStatus } from "@/types";
 import { useProductStore } from "@/store/useProductStore";
 import { useToastStore } from "@/store/useToastStore";
 import { formatPrice, formatProductPrice } from "@/lib/format";
@@ -9,16 +9,32 @@ import {
   seedProductsIfEmpty,
   importProductsToDb,
 } from "@/lib/products-db";
-import { subscribeToOrders, updateOrderStatus } from "@/lib/orders-db";
+import { subscribeToOrders, updateOrderStatus, updateOrderProductionStatus } from "@/lib/orders-db";
 import { ProductForm } from "./ProductForm";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "products", label: "Products" },
   { id: "orders", label: "Orders" },
+  { id: "pipeline", label: "Pipeline" },
+  { id: "logistics", label: "Logistics" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+
+const PRODUCTION_STEPS: { key: OrderProductionStatus; label: string; icon: string; color: string }[] = [
+  { key: "received", label: "Received", icon: "📥", color: "border-blue-400 bg-blue-50 dark:bg-blue-950/30" },
+  { key: "production", label: "Cutting & Sewing", icon: "🧵", color: "border-amber-400 bg-amber-50 dark:bg-amber-950/30" },
+  { key: "ready", label: "Ready for Dispatch", icon: "📦", color: "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30" },
+  { key: "completed", label: "Completed", icon: "✅", color: "border-green-400 bg-green-50 dark:bg-green-950/30" },
+];
+
+const LAGOS_ZONES: { name: string; areas: string[] }[] = [
+  { name: "Lagos Mainland", areas: ["Yaba","Surulere","Ebute Metta","Mushin","Somolu","Bariga","Gbagada","Maryland","Anthony","Ilupeju","Oshodi","Isolo","Palmgrove","Fadeyi","Ojota","Ketu","Alapere","Ogudu","Magodo","Ikeja","Allen","Opebi","GRA Ikeja","Agege","Ogba","Iju","Abule Egba","Ipaja","Gowon Estate","Egbeda","Ayobo","Iyana Ipaja","Alimosho","Festac","Amuwo Odofin","Iganmu","Apapa","Orile","Coker","Satellite Town","Kirikiri","Mile 2","Badagry"] },
+  { name: "Lagos Island", areas: ["Victoria Island","Ikoyi","Banana Island","Lekki Phase 1","Ikate","Oniru","Chevron Drive","Orchid Road","VGC","Ikota","Osapa London","Jakande","Marina","Lagos Island","Falomo","Eko Atlantic"] },
+  { name: "Ajah Corridor", areas: ["Ajah","Abraham Adesanya","Ogombo","Sangotedo","Abijo","Lakowe","Ibeju-Lekki","Eleko","Epe"] },
+  { name: "Ogun Border Axis", areas: ["Berger","Ojodu","Isheri","Magboro","Mowe","Ibafo","Arepo","Alagbole","Akute","Opic","Sango Ota","Ado-Odo"] },
+];
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending: "bg-gold/20 text-ink dark:text-bone",
@@ -45,6 +61,13 @@ export function AdminDashboard() {
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+
+  // Pipeline state
+  const [updatingProductionId, setUpdatingProductionId] = useState<string | null>(null);
+
+  // Logistics state
+  const [logisticsZoneFilter, setLogisticsZoneFilter] = useState<string>("all");
+  const [logisticsFulfillmentFilter, setLogisticsFulfillmentFilter] = useState<string>("all");
 
   // Subscribe to live orders
   useEffect(() => {
@@ -78,6 +101,40 @@ export function AdminDashboard() {
     const deliveryCount = orders.filter((o) => o.fulfillment === "delivery").length;
     const pickupCount = orders.filter((o) => o.fulfillment === "pickup").length;
 
+    // Top selling products by quantity
+    const productQtyMap = new Map<string, { name: string; qty: number; revenue: number; image: string }>();
+    for (const o of paidOrders) {
+      for (const item of o.items) {
+        const existing = productQtyMap.get(item.name) ?? { name: item.name, qty: 0, revenue: 0, image: item.image };
+        existing.qty += item.quantity;
+        existing.revenue += item.unitPrice * item.quantity;
+        productQtyMap.set(item.name, existing);
+      }
+    }
+    const topProducts = [...productQtyMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+
+    // Weekly sales for the last 8 weeks
+    const now = Date.now();
+    const weeklySales: { label: string; total: number }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const weekStart = new Date(now - i * 7 * 86400000);
+      const weekEnd = new Date(now - (i - 1) * 7 * 86400000);
+      const weekLabel = weekStart.toLocaleDateString("en-NG", { month: "short", day: "numeric" });
+      const weekTotal = paidOrders
+        .filter((o) => o.createdAt >= weekStart && o.createdAt < weekEnd)
+        .reduce((sum, o) => sum + o.total, 0);
+      weeklySales.push({ label: weekLabel, total: weekTotal });
+    }
+
+    // Zone distribution for delivery orders
+    const zoneDistribution = new Map<string, number>();
+    for (const o of orders.filter((o) => o.fulfillment === "delivery")) {
+      const state = o.shippingAddress?.state ?? "Unknown";
+      const zoneMatch = state.match(/\((.+?)\)/);
+      const zone = zoneMatch ? zoneMatch[1] : "Other";
+      zoneDistribution.set(zone, (zoneDistribution.get(zone) ?? 0) + 1);
+    }
+
     return {
       totalSales,
       pendingBank,
@@ -88,6 +145,9 @@ export function AdminDashboard() {
       aov,
       deliveryCount,
       pickupCount,
+      topProducts,
+      weeklySales,
+      zoneDistribution: [...zoneDistribution.entries()].sort((a, b) => b[1] - a[1]),
     };
   }, [orders]);
 
@@ -251,6 +311,99 @@ export function AdminDashboard() {
     }
   };
 
+  const handleProductionStatusUpdate = async (orderId: string, nextStatus: OrderProductionStatus) => {
+    setUpdatingProductionId(orderId);
+    try {
+      await updateOrderProductionStatus(orderId, nextStatus);
+      addToast(`Production status → ${nextStatus}`);
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to update production status");
+    } finally {
+      setUpdatingProductionId(null);
+    }
+  };
+
+  // Pipeline computed data
+  const pipelineOrders = useMemo(() => {
+    return orders.filter((o) => o.status === "paid");
+  }, [orders]);
+
+  const tailoringSheet = useMemo(() => {
+    const sheet = new Map<string, { name: string; size: string; length: string; qty: number }>();
+    for (const o of pipelineOrders) {
+      const ps = o.productionStatus ?? "pending";
+      if (ps === "completed") continue;
+      for (const item of o.items) {
+        const key = `${item.name}|${item.size ?? "—"}|${item.length ?? "—"}`;
+        const existing = sheet.get(key) ?? { name: item.name, size: item.size ?? "—", length: item.length ?? "—", qty: 0 };
+        existing.qty += item.quantity;
+        sheet.set(key, existing);
+      }
+    }
+    return [...sheet.values()].sort((a, b) => b.qty - a.qty);
+  }, [pipelineOrders]);
+
+  // Logistics computed data
+  const logisticsOrders = useMemo(() => {
+    let list = orders.filter((o) => o.status === "paid" || o.status === "pending");
+
+    if (logisticsFulfillmentFilter !== "all") {
+      list = list.filter((o) => o.fulfillment === logisticsFulfillmentFilter);
+    }
+
+    if (logisticsZoneFilter !== "all") {
+      list = list.filter((o) => {
+        const state = o.shippingAddress?.state ?? "";
+        return state.includes(`(${logisticsZoneFilter})`);
+      });
+    }
+
+    return list;
+  }, [orders, logisticsFulfillmentFilter, logisticsZoneFilter]);
+
+  const handleCsvExport = useCallback(() => {
+    const rows = logisticsOrders
+      .filter((o) => o.fulfillment === "delivery")
+      .map((o) => ({
+        "Order ID": o.id,
+        "Customer": `${o.customer.firstName} ${o.customer.lastName}`,
+        "Phone": o.customer.phone,
+        "Email": o.customer.email,
+        "Address": o.shippingAddress?.address ?? "",
+        "City": o.shippingAddress?.city ?? "",
+        "State": o.shippingAddress?.state ?? "",
+        "Items": o.items.map((i) => `${i.name} x${i.quantity}${i.size ? ` (${i.size})` : ""}`).join("; "),
+        "Total": o.total,
+        "Status": o.status,
+      }));
+
+    if (!rows.length) {
+      addToast("No delivery orders to export");
+      return;
+    }
+
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) =>
+        headers.map((h) => {
+          const val = String(r[h as keyof typeof r]);
+          return val.includes(",") || val.includes('"') ? `"${val.replace(/"/g, '""')}"` : val;
+        }).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `potters-dispatch-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    addToast("Dispatch CSV downloaded");
+  }, [logisticsOrders, addToast]);
+
   return (
     <div className="shell py-8">
       {/* Title Header */}
@@ -375,36 +528,145 @@ export function AdminDashboard() {
             </div>
 
             {/* Store Status Summary */}
-            <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
-              <h2 className="font-display text-base font-semibold">Store Stats</h2>
-              <div className="mt-4 space-y-4 text-sm">
-                <div>
-                  <span className="text-xs font-semibold text-ink/40 dark:text-bone/40 uppercase">Fulfilment Distribution</span>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span>Delivery</span>
-                    <span className="font-mono font-semibold">{analytics.deliveryCount}</span>
+            <div className="space-y-6">
+              <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
+                <h2 className="font-display text-base font-semibold">Store Stats</h2>
+                <div className="mt-4 space-y-4 text-sm">
+                  <div>
+                    <span className="text-xs font-semibold text-ink/40 dark:text-bone/40 uppercase">Fulfilment Distribution</span>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span>Delivery</span>
+                      <span className="font-mono font-semibold">{analytics.deliveryCount}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span>Store Pickup</span>
+                      <span className="font-mono font-semibold">{analytics.pickupCount}</span>
+                    </div>
                   </div>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span>Store Pickup</span>
-                    <span className="font-mono font-semibold">{analytics.pickupCount}</span>
-                  </div>
-                </div>
 
-                <div>
-                  <span className="text-xs font-semibold text-ink/40 dark:text-bone/40 uppercase">Status Breakdown</span>
-                  <div className="mt-2 flex items-center justify-between text-emerald-600 dark:text-emerald-450">
-                    <span>Paid</span>
-                    <span className="font-mono font-semibold">{analytics.paidCount}</span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-gold">
-                    <span>Pending Bank Transfer</span>
-                    <span className="font-mono font-semibold">{analytics.pendingCount}</span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-sale">
-                    <span>Failed / Cancelled</span>
-                    <span className="font-mono font-semibold">{analytics.failedCount}</span>
+                  <div>
+                    <span className="text-xs font-semibold text-ink/40 dark:text-bone/40 uppercase">Status Breakdown</span>
+                    <div className="mt-2 flex items-center justify-between text-emerald-600 dark:text-emerald-450">
+                      <span>Paid</span>
+                      <span className="font-mono font-semibold">{analytics.paidCount}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-gold">
+                      <span>Pending Bank Transfer</span>
+                      <span className="font-mono font-semibold">{analytics.pendingCount}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-sale">
+                      <span>Failed / Cancelled</span>
+                      <span className="font-mono font-semibold">{analytics.failedCount}</span>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Zone Distribution */}
+              {analytics.zoneDistribution.length > 0 && (
+                <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
+                  <h2 className="font-display text-base font-semibold">Delivery Zones</h2>
+                  <div className="mt-4 space-y-2 text-sm">
+                    {analytics.zoneDistribution.map(([zone, count]) => (
+                      <div key={zone} className="flex items-center justify-between">
+                        <span className="text-ink/70 dark:text-bone/70">{zone}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 rounded-full bg-gold/30" style={{ width: `${Math.max(20, (count / Math.max(...analytics.zoneDistribution.map((z) => z[1]))) * 80)}px` }}>
+                            <div className="h-full rounded-full bg-gold" style={{ width: "100%" }} />
+                          </div>
+                          <span className="font-mono font-semibold text-xs w-6 text-right">{count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sales Trend Chart + Top Products */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Weekly Sales Chart */}
+            <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
+              <h2 className="font-display text-base font-semibold">Sales Trend</h2>
+              <p className="text-xs text-ink/50 dark:text-bone/45 mt-1">Weekly revenue (last 8 weeks)</p>
+              <div className="mt-4">
+                {(() => {
+                  const maxVal = Math.max(...analytics.weeklySales.map((w) => w.total), 1);
+                  const chartH = 140;
+                  const barW = 100 / analytics.weeklySales.length;
+                  return (
+                    <div>
+                      <svg viewBox={`0 0 400 ${chartH + 30}`} className="w-full" aria-label="Weekly sales chart">
+                        {analytics.weeklySales.map((w, i) => {
+                          const barH = (w.total / maxVal) * chartH;
+                          const x = i * (400 / analytics.weeklySales.length) + 10;
+                          const barWidth = 400 / analytics.weeklySales.length - 20;
+                          return (
+                            <g key={i}>
+                              <rect
+                                x={x}
+                                y={chartH - barH}
+                                width={Math.max(barWidth, 8)}
+                                height={barH}
+                                rx={4}
+                                className="fill-gold/70 transition-all hover:fill-gold"
+                              />
+                              <text
+                                x={x + barWidth / 2}
+                                y={chartH + 16}
+                                textAnchor="middle"
+                                className="fill-ink/40 dark:fill-bone/40 text-[9px]"
+                              >
+                                {w.label}
+                              </text>
+                              {w.total > 0 && (
+                                <text
+                                  x={x + barWidth / 2}
+                                  y={chartH - barH - 6}
+                                  textAnchor="middle"
+                                  className="fill-ink/60 dark:fill-bone/60 text-[8px] font-semibold"
+                                >
+                                  {formatPrice(w.total)}
+                                </text>
+                              )}
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Top Products Leaderboard */}
+            <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
+              <h2 className="font-display text-base font-semibold">Best Sellers</h2>
+              <p className="text-xs text-ink/50 dark:text-bone/45 mt-1">Top products by revenue</p>
+              <div className="mt-4 divide-y divide-mist/50 dark:divide-edge/50">
+                {analytics.topProducts.length > 0 ? (
+                  analytics.topProducts.map((p, i) => (
+                    <div key={p.name} className="flex items-center gap-3 py-3 text-sm first:pt-0 last:pb-0">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold">
+                        {i + 1}
+                      </span>
+                      <img
+                        src={p.image || "/hanger-placeholder.svg"}
+                        alt=""
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/hanger-placeholder.svg"; }}
+                        className="h-9 w-7 rounded object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{p.name}</p>
+                        <p className="text-xs text-ink/50 dark:text-bone/50">{p.qty} sold</p>
+                      </div>
+                      <span className="font-mono text-xs font-semibold text-gold">{formatPrice(p.revenue)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-ink/50 dark:text-bone/50 py-8">No sales data yet.</p>
+                )}
               </div>
             </div>
           </div>
@@ -585,6 +847,241 @@ export function AdminDashboard() {
                       ) : (
                         "No orders match your search."
                       )}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 4: PIPELINE ─────────────────────────────────────────────── */}
+      {activeTab === "pipeline" && (
+        <div className="mt-8 space-y-8">
+          {/* Tailoring Cut Sheet */}
+          <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
+            <div className="flex items-center gap-3 mb-1">
+              <span className="text-xl">✂️</span>
+              <h2 className="font-display text-base font-semibold">Tailoring Cut Sheet</h2>
+            </div>
+            <p className="text-xs text-ink/50 dark:text-bone/45">Aggregated sizes and lengths for all active (non-completed) paid orders.</p>
+            {tailoringSheet.length > 0 ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-mist bg-surface text-left text-xs uppercase tracking-wider text-ink/60 dark:border-edge dark:bg-carbon dark:text-bone/60">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Design</th>
+                      <th className="px-4 py-3 font-semibold">Size</th>
+                      <th className="px-4 py-3 font-semibold">Length</th>
+                      <th className="px-4 py-3 font-semibold text-right">Qty to Cut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tailoringSheet.map((row) => (
+                      <tr key={`${row.name}-${row.size}-${row.length}`} className="border-b border-mist/60 last:border-0 dark:border-edge/60">
+                        <td className="px-4 py-3 font-semibold">{row.name}</td>
+                        <td className="px-4 py-3">{row.size}</td>
+                        <td className="px-4 py-3">{row.length}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gold/15 font-mono text-xs font-bold text-gold">
+                            {row.qty}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="mt-6 text-center text-sm text-ink/50 dark:text-bone/50 py-4">No active orders in the pipeline.</p>
+            )}
+          </div>
+
+          {/* Production Pipeline Columns */}
+          <div>
+            <h2 className="font-display text-base font-semibold mb-4">Production Pipeline</h2>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {PRODUCTION_STEPS.map((step) => {
+                const stepOrders = pipelineOrders.filter((o) => (o.productionStatus ?? "pending") === step.key || (step.key === "received" && !(o.productionStatus)));
+                const nextStepIndex = PRODUCTION_STEPS.findIndex((s) => s.key === step.key) + 1;
+                const nextStep = PRODUCTION_STEPS[nextStepIndex];
+
+                return (
+                  <div key={step.key} className={`rounded-card border-2 p-4 ${step.color}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg">{step.icon}</span>
+                      <h3 className="font-display text-sm font-semibold">{step.label}</h3>
+                      <span className="ml-auto rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-bold dark:bg-bone/10">
+                        {stepOrders.length}
+                      </span>
+                    </div>
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {stepOrders.map((order) => (
+                        <div key={order.id} className="rounded-lg border border-mist/50 bg-bone/80 p-3 dark:border-edge/50 dark:bg-ink/40">
+                          <p className="font-mono text-[11px] font-semibold text-gold truncate">{order.id}</p>
+                          <p className="text-xs mt-1 font-semibold truncate">
+                            {order.customer.firstName} {order.customer.lastName}
+                          </p>
+                          <div className="mt-1.5 text-[11px] text-ink/50 dark:text-bone/50 space-y-0.5">
+                            {order.items.slice(0, 2).map((item, idx) => (
+                              <p key={idx} className="truncate">
+                                {item.name} {item.size ? `· ${item.size}` : ""} ×{item.quantity}
+                              </p>
+                            ))}
+                            {order.items.length > 2 && (
+                              <p className="text-ink/40 dark:text-bone/40">+{order.items.length - 2} more</p>
+                            )}
+                          </div>
+                          {nextStep && (
+                            <button
+                              type="button"
+                              disabled={updatingProductionId === order.id}
+                              onClick={() => void handleProductionStatusUpdate(order.id, nextStep.key)}
+                              className="mt-2 w-full rounded-lg bg-gold/15 px-2 py-1.5 text-[11px] font-semibold text-gold hover:bg-gold/25 disabled:opacity-50 transition-colors"
+                            >
+                              {updatingProductionId === order.id ? "Updating…" : `Move → ${nextStep.label}`}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {stepOrders.length === 0 && (
+                        <p className="text-center text-xs text-ink/40 dark:text-bone/40 py-6">Empty</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: LOGISTICS ────────────────────────────────────────────── */}
+      {activeTab === "logistics" && (
+        <div className="mt-8 space-y-6">
+          {/* Filters + Export */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Zone Filter */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-ink/65 dark:text-bone/65">Zone</span>
+                <select
+                  value={logisticsZoneFilter}
+                  onChange={(e) => setLogisticsZoneFilter(e.target.value)}
+                  className="rounded-card border border-mist bg-bone px-3 py-2 text-sm focus:border-gold focus:outline-none dark:border-edge dark:bg-carbon dark:text-bone"
+                >
+                  <option value="all">All Zones</option>
+                  {LAGOS_ZONES.map((z) => (
+                    <option key={z.name} value={z.name}>{z.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Fulfillment Filter */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-ink/65 dark:text-bone/65">Fulfillment</span>
+                <select
+                  value={logisticsFulfillmentFilter}
+                  onChange={(e) => setLogisticsFulfillmentFilter(e.target.value)}
+                  className="rounded-card border border-mist bg-bone px-3 py-2 text-sm focus:border-gold focus:outline-none dark:border-edge dark:bg-carbon dark:text-bone"
+                >
+                  <option value="all">All</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="pickup">Pickup</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCsvExport}
+              className="btn-primary py-2 text-xs flex items-center gap-2"
+            >
+              <span>📋</span> Export CSV for Dispatch
+            </button>
+          </div>
+
+          {/* Zone Summary Cards */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {LAGOS_ZONES.map((zone) => {
+              const zoneCount = orders.filter((o) => {
+                const st = o.shippingAddress?.state ?? "";
+                return st.includes(`(${zone.name})`);
+              }).length;
+              return (
+                <button
+                  key={zone.name}
+                  type="button"
+                  onClick={() => setLogisticsZoneFilter(logisticsZoneFilter === zone.name ? "all" : zone.name)}
+                  className={`rounded-card border p-4 text-left transition-all ${
+                    logisticsZoneFilter === zone.name
+                      ? "border-gold bg-gold/10 ring-1 ring-gold/30"
+                      : "border-mist bg-bone hover:border-gold/40 dark:border-edge dark:bg-carbon"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink/40 dark:text-bone/45">{zone.name}</p>
+                  <p className="mt-1 font-display text-2xl font-bold text-ink dark:text-bone">{zoneCount}</p>
+                  <p className="mt-0.5 text-[11px] text-ink/50 dark:text-bone/50">delivery orders</p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dispatch Table */}
+          <div className="overflow-x-auto rounded-card border border-mist dark:border-edge">
+            <table className="w-full text-sm">
+              <thead className="border-b border-mist bg-surface text-left text-xs uppercase tracking-wider text-ink/60 dark:border-edge dark:bg-carbon dark:text-bone/60">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Order ID</th>
+                  <th className="px-4 py-3 font-semibold">Customer</th>
+                  <th className="px-4 py-3 font-semibold">Phone</th>
+                  <th className="px-4 py-3 font-semibold">Zone / Address</th>
+                  <th className="px-4 py-3 font-semibold">Items</th>
+                  <th className="px-4 py-3 font-semibold">Fulfillment</th>
+                  <th className="px-4 py-3 text-right font-semibold">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logisticsOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-mist/60 last:border-0 dark:border-edge/60">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold">{order.id}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold">{order.customer.firstName} {order.customer.lastName}</p>
+                      <p className="text-xs text-ink/50 dark:text-bone/50">{order.customer.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-xs">{order.customer.phone}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {order.fulfillment === "delivery" && order.shippingAddress ? (
+                        <div>
+                          <p className="font-semibold">{order.shippingAddress.state}</p>
+                          <p className="text-ink/50 dark:text-bone/50 mt-0.5">{order.shippingAddress.address}, {order.shippingAddress.city}</p>
+                        </div>
+                      ) : (
+                        <span className="text-ink/50 dark:text-bone/50">Store Pickup</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-xs space-y-0.5 max-w-[180px]">
+                        {order.items.map((item, idx) => (
+                          <p key={idx} className="truncate">{item.name} ×{item.quantity}{item.size ? ` (${item.size})` : ""}</p>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${
+                        order.fulfillment === "delivery" ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                      }`}>
+                        {order.fulfillment}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-xs font-semibold">{formatPrice(order.total)}</td>
+                  </tr>
+                ))}
+                {logisticsOrders.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-12 text-center text-ink/50 dark:text-bone/50">
+                      No orders match these filters.
                     </td>
                   </tr>
                 )}

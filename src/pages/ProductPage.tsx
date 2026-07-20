@@ -229,20 +229,25 @@ export function ProductPage() {
                 )}
               </p>
               <div className="flex flex-wrap gap-2">
-                {product.colors.map((c) => (
+                {product.colors.map((c) => {
+                  const colorOos = product.variantStock?.colors?.[c] === false;
+                  return (
                   <button
                     key={c}
                     onClick={() => setColor(c)}
+                    disabled={colorOos}
                     className={cn(
                       "rounded-card border px-4 py-2 text-sm transition-colors",
                       color === c
                         ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
                         : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
+                      colorOos && "cursor-not-allowed opacity-40 line-through",
                     )}
                   >
                     {c}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -267,20 +272,25 @@ export function ProductPage() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((s) => (
+                {product.sizes.map((s) => {
+                  const sizeOos = product.variantStock?.sizes?.[s] === false;
+                  return (
                   <button
                     key={s}
                     onClick={() => setSize(s)}
+                    disabled={sizeOos}
                     className={cn(
                       "min-w-10 rounded-card border px-3 py-2 text-sm transition-colors",
                       size === s
                         ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
                         : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
+                      sizeOos && "cursor-not-allowed opacity-40 line-through",
                     )}
                   >
                     {s}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
