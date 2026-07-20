@@ -438,7 +438,14 @@ export function AdminDashboard() {
                   <tr key={product.id} className="border-b border-mist/60 last:border-0 dark:border-edge/60">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <img src={product.image} alt="" className="h-12 w-10 rounded-card object-cover" />
+                        <img
+                          src={product.image || "/hanger-placeholder.svg"}
+                          alt=""
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/hanger-placeholder.svg";
+                          }}
+                          className="h-12 w-10 rounded-card object-cover"
+                        />
                         <div>
                           <p className="font-semibold">{product.name}</p>
                           <p className="text-xs text-ink/50 dark:text-bone/50">/{product.slug}</p>
@@ -687,7 +694,14 @@ export function AdminDashboard() {
                   <div className="divide-y divide-mist/40 dark:divide-edge/40 max-h-48 overflow-y-auto pr-1">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex gap-3 py-2.5 text-sm first:pt-0 last:pb-0">
-                        <img src={item.image} alt="" className="h-10 w-8 rounded-card object-cover" />
+                        <img
+                          src={item.image || "/hanger-placeholder.svg"}
+                          alt=""
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/hanger-placeholder.svg";
+                          }}
+                          className="h-10 w-8 rounded-card object-cover"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">{item.name}</p>
                           <p className="text-xs text-ink/50 dark:text-bone/50 mt-0.5">
