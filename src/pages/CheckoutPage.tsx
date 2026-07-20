@@ -643,14 +643,23 @@ export function CheckoutPage() {
               </Field>
               <Field label={isDomestic ? "State" : "State / Region"} required>
                 {isDomestic ? (
-                  <select required className="input-field" {...field("state")}>
-                    <option value="">— Select state —</option>
-                    {NIGERIAN_STATES.map((s) => (
-                      <option key={s.name} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      required
+                      className="input-field appearance-none pr-8"
+                      {...field("state")}
+                    >
+                      <option value="">— Select state —</option>
+                      {NIGERIAN_STATES.map((s) => (
+                        <option key={s.name} value={s.name}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 dark:text-bone/40">
+                      ▾
+                    </span>
+                  </div>
                 ) : (
                   <input
                     type="text"
@@ -762,13 +771,22 @@ export function CheckoutPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Country" required>
-                <select required className="input-field" {...field("countryCode")}>
-                  {SORTED_COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    required
+                    className="input-field appearance-none pr-8"
+                    {...field("countryCode")}
+                  >
+                    {SORTED_COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 dark:text-bone/40">
+                    ▾
+                  </span>
+                </div>
               </Field>
               <Field label="Postal / ZIP code">
                 <input
