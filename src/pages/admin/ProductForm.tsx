@@ -87,7 +87,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
     try {
       const url = await uploadProductImage(file, effectiveSlug);
       setImage(url);
-      setGallery((g) => (g.length === 0 ? [url] : g));
+      setGallery((g) => (g.includes(url) ? g : [...g, url]));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Image upload failed. Check Storage is enabled and try again.";
       setError(msg);
@@ -113,6 +113,16 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       setUploading(false);
       e.target.value = "";
     }
+  };
+
+  const handleRemoveImage = (url: string) => {
+    setGallery((g) => {
+      const next = g.filter((u) => u !== url);
+      if (image === url) {
+        setImage(next[0] ?? "");
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -255,7 +265,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                 )}
                 <button
                   type="button"
-                  onClick={() => setGallery((g) => g.filter((u) => u !== url))}
+                  onClick={() => handleRemoveImage(url)}
                   className="absolute right-0 top-0 bg-ink/70 px-1.5 text-xs text-bone hover:bg-sale"
                 >
                   ×
@@ -291,7 +301,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                     const val = imageUrlInput.trim();
                     if (val) {
                       setImage(val);
-                      setGallery((g) => (g.length === 0 ? [val] : g));
+                      setGallery((g) => (g.includes(val) ? g : [...g, val]));
                       setImageUrlInput("");
                     }
                   }}
