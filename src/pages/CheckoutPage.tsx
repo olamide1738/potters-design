@@ -109,6 +109,63 @@ interface RatesState {
   date: string;
 }
 
+const LAGOS_ZONES = [
+  {
+    id: "Lagos Mainland",
+    fee: 4000,
+    areas: [
+      "Yaba", "Surulere", "Ebute Metta", "Mushin", "Somolu", "Bariga", "Gbagada", "Maryland", 
+      "Anthony", "Ilupeju", "Oshodi", "Isolo", "Palmgrove", "Fadeyi", "Ojota", "Ketu", 
+      "Alapere", "Ogudu", "Magodo", "Ikeja", "Allen", "Opebi", "GRA Ikeja", "Agege", "Ogba", 
+      "Iju", "Abule Egba", "Ipaja", "Gowon Estate", "Egbeda", "Ayobo", "Iyana Ipaja", 
+      "Alimosho", "Festac", "Amuwo Odofin", "Iganmu", "Apapa", "Orile", "Coker", "Satellite Town", 
+      "Kirikiri", "Mile 2", "Badagry"
+    ],
+  },
+  {
+    id: "Lagos Island",
+    fee: 6000,
+    areas: [
+      "Victoria Island", "Ikoyi", "Banana Island", "Lekki Phase 1", "Ikate", "Oniru", 
+      "Chevron Drive", "Orchid Road", "VGC", "Ikota", "Osapa London", "Jakande", 
+      "Ajah", "Marina", "Lagos Island", "Falomo", "Eko Atlantic"
+    ],
+  },
+  {
+    id: "Ajah Corridor",
+    fee: 7000,
+    areas: [
+      "Abraham Adesanya", "Ogombo", "Sangotedo", "Monastery Road", "LBS", "Crown Estate", 
+      "Novare Mall", "Abijo", "Awoyaya", "Lakowe", "Bogije"
+    ],
+  },
+  {
+    id: "Ogun Border Axis",
+    fee: 7000,
+    areas: [
+      "Akute", "Alagbole", "Berger Extension", "Arepo", "Warewa", "OPIC", "Mowe", "Magboro"
+    ],
+  },
+];
+
+function SearchIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
 export function CheckoutPage() {
   const cart = useStore((s) => s.cart);
   const subtotal = useStore((s) => s.cartSubtotal());
@@ -220,14 +277,9 @@ export function CheckoutPage() {
     if (!isDomestic || isPickup) return null;
     if (form.state === "Lagos") {
       if (!lagosArea) return null;
-      const lagosFees: Record<string, number> = {
-        "Lagos Mainland": 4000,
-        "Lagos Island": 6000,
-        "Ajah Corridor": 7000,
-        "Ogun Border Axis": 7000,
-      };
+      const zone = LAGOS_ZONES.find((z) => z.id === lagosArea);
       return {
-        fee: lagosFees[lagosArea] ?? 0,
+        fee: zone?.fee ?? 0,
         service: `${lagosArea} Delivery`,
         remoteFee: 0,
       };
@@ -612,39 +664,100 @@ export function CheckoutPage() {
             </div>
 
             {isDomestic && form.state === "Lagos" && (
-              <Field label="Delivery Zone / Area" required>
-                <select
-                  required
-                  className="input-field"
-                  value={lagosArea}
-                  onChange={(e) => setLagosArea(e.target.value)}
-                >
-                  <option value="">— Select your delivery zone —</option>
-                  <option value="Lagos Mainland">
-                    Lagos Mainland (Yaba, Surulere, Ikeja, Festac, Apapa, etc.) — ₦4,000
-                  </option>
-                  <option value="Lagos Island">
-                    Lagos Island (VI, Ikoyi, Lekki 1, Ajah, Falomo, etc.) — ₦6,000
-                  </option>
-                  <option value="Ajah Corridor">
-                    Ajah Corridor (Sangotedo, LBS, Abijo, Awoyaya, etc.) — ₦7,000
-                  </option>
-                  <option value="Ogun Border Axis">
-                    Ogun Border Axis (Arepo, OPIC, Mowe, Magboro, etc.) — ₦7,000
-                  </option>
-                </select>
-                <p className="mt-1.5 text-[11px] text-ink/50 dark:text-bone/50 leading-normal">
-                  <strong>Mainland:</strong> Yaba, Surulere, Ebute Metta, Mushin, Somolu, Bariga, Gbagada, Maryland, Anthony, Ilupeju, Oshodi, Isolo, Palmgrove, Fadeyi, Ojota, Ketu, Alapere, Ogudu, Magodo, Ikeja, Allen, Opebi, GRA Ikeja, Agege, Ogba, Iju, Abule Egba, Ipaja, Gowon Estate, Egbeda, Ayobo, Iyana Ipaja, Alimosho, Festac, Amuwo Odofin, Iganmu, Apapa, Orile, Coker, Satellite Town, Kirikiri, Mile 2, Badagry, etc.
-                  <br className="mt-1" />
-                  <strong>Island:</strong> Victoria Island, Ikoyi, Banana Island, Lekki Phase 1, Ikate, Oniru, Chevron, Orchid Rd, VGC, Ikota, Osapa London, Jakande, Ajah (to Abraham Adesanya), Marina, Falomo, Eko Atlantic, etc.
-                  <br className="mt-1" />
-                  <strong>Ajah Corridor:</strong> Abraham Adesanya, Ogombo, Sangotedo, Monastery Rd, LBS, Crown Estate, Novare Mall, Abijo, Awoyaya, Lakowe, Bogije, etc.
-                  <br className="mt-1" />
-                  <strong>Ogun Border:</strong> Akute, Alagbole, Berger Ext, Arepo, Warewa, OPIC, Mowe, Magboro, etc.
-                  <br className="mt-1" />
-                  <span className="italic text-gold">Note: If your location is not listed, please contact us before placing your order so we can provide an accurate delivery quote.</span>
+              <div className="space-y-4 border-t border-mist/30 pt-4 dark:border-edge/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-ink/70 dark:text-bone/70">
+                    Select Lagos Delivery Zone *
+                  </span>
+                  {lagosArea && (
+                    <span className="text-xs font-bold text-gold uppercase tracking-wider">
+                      {lagosArea} selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Interactive search bar */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Type your area to auto-select zone (e.g. Lekki, GRA, Sangotedo...)"
+                    className="input-field pl-10 pr-4 py-2.5 text-sm w-full"
+                    onChange={(e) => {
+                      const query = e.target.value.toLowerCase().trim();
+                      if (!query) return;
+                      const foundZone = LAGOS_ZONES.find((z) =>
+                        z.areas.some((area) => area.toLowerCase().includes(query))
+                      );
+                      if (foundZone) {
+                        setLagosArea(foundZone.id);
+                      }
+                    }}
+                  />
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/30 dark:text-bone/30">
+                    <SearchIcon />
+                  </div>
+                </div>
+
+                {/* 2x2 grid of zone cards */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {LAGOS_ZONES.map((zone) => {
+                    const isSelected = lagosArea === zone.id;
+                    return (
+                      <button
+                        key={zone.id}
+                        type="button"
+                        onClick={() => setLagosArea(zone.id)}
+                        className={`flex flex-col items-start justify-between rounded-card border p-4 text-left transition-all hover:scale-[1.01] ${
+                          isSelected
+                            ? "border-gold bg-gold/[0.04] dark:bg-gold/[0.08] ring-1 ring-gold"
+                            : "border-mist hover:border-ink/30 dark:border-edge dark:hover:border-bone/30"
+                        }`}
+                      >
+                        <div className="flex w-full justify-between items-baseline gap-2">
+                          <span className="font-semibold text-xs text-ink dark:text-bone">
+                            {zone.id}
+                          </span>
+                          <span className="font-mono text-xs font-semibold text-gold">
+                            ₦{zone.fee.toLocaleString()}
+                          </span>
+                        </div>
+                        <span className="mt-1 text-[10px] text-ink/40 dark:text-bone/40 line-clamp-1">
+                          {zone.areas.slice(0, 5).join(", ")}...
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selected zone details card */}
+                {lagosArea && (
+                  <div className="rounded-card border border-gold bg-gold/[0.02] p-4 text-xs dark:bg-gold/[0.04] transition-all">
+                    <div className="flex justify-between items-center mb-2 border-b border-gold/20 pb-2">
+                      <span className="font-bold text-[10px] text-gold uppercase tracking-wider">
+                        {lagosArea} Coverage
+                      </span>
+                      <span className="font-mono font-semibold text-gold">
+                        ₦{LAGOS_ZONES.find((z) => z.id === lagosArea)?.fee.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mt-2 max-h-[140px] overflow-y-auto pr-1">
+                      {LAGOS_ZONES.find((z) => z.id === lagosArea)?.areas.map((area) => (
+                        <span
+                          key={area}
+                          className="px-2 py-0.5 rounded bg-mist/50 dark:bg-edge/50 text-[10px] text-ink/75 dark:text-bone/75 font-medium"
+                        >
+                          {area}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Website Note */}
+                <p className="text-[10px] italic text-ink/40 dark:text-bone/40">
+                  Note: If your location is not listed, please contact us before placing your order so we can provide an accurate delivery quote.
                 </p>
-              </Field>
+              </div>
             )}
 
             <div className="grid gap-4 sm:grid-cols-2">
