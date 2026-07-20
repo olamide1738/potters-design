@@ -30,9 +30,14 @@ export function AdminLayout() {
             </span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <Link to="/" className="text-ink/60 hover:text-gold dark:text-bone/60">
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ink/60 hover:text-gold dark:text-bone/60"
+            >
               View store
-            </Link>
+            </a>
             {user && !onLogin && (
               <button
                 type="button"

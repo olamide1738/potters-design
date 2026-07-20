@@ -130,7 +130,6 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
     setError(null);
 
     if (!name.trim()) return setError("Name is required.");
-    if (!image) return setError("A main image is required.");
 
     let finalPrice: Product["price"];
     if (variablePrice) {
@@ -151,8 +150,8 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       slug: effectiveSlug,
       name: name.trim(),
       price: finalPrice,
-      image,
-      gallery: gallery.length ? gallery : [image],
+      image: image || "",
+      gallery: gallery.filter(Boolean),
       category,
       tags,
       colors,
