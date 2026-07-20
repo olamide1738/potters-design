@@ -142,6 +142,7 @@ export function CheckoutPage() {
     countryCode: "NG",
     zip: "",
   });
+  const [lagosArea, setLagosArea] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [paystackLoaded, setPaystackLoaded] = useState(false);
   const [paystackLoadFailed, setPaystackLoadFailed] = useState(false);
@@ -151,6 +152,13 @@ export function CheckoutPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderNote, setOrderNote] = useState("");
   const isPickup = fulfillment === "pickup";
+
+  // Reset Lagos Area if state changes to non-Lagos
+  useEffect(() => {
+    if (form.state !== "Lagos") {
+      setLagosArea("");
+    }
+  }, [form.state]);
 
   // Auto-switch display currency when country changes
   const prevCode = useRef("NG");
@@ -208,10 +216,24 @@ export function CheckoutPage() {
   // Shipping calculation — domestic vs international
   const isDomestic = form.countryCode === "NG";
 
-  const domesticRate = useMemo(
-    () => (isDomestic && !isPickup ? getDomesticRate(form.state, weightKg) : null),
-    [isDomestic, isPickup, form.state, weightKg],
-  );
+  const domesticRate = useMemo(() => {
+    if (!isDomestic || isPickup) return null;
+    if (form.state === "Lagos") {
+      if (!lagosArea) return null;
+      const lagosFees: Record<string, number> = {
+        "Lagos Mainland": 4000,
+        "Lagos Island": 6000,
+        "Ajah Corridor": 7000,
+        "Ogun Border Axis": 7000,
+      };
+      return {
+        fee: lagosFees[lagosArea] ?? 0,
+        service: `${lagosArea} Delivery`,
+        remoteFee: 0,
+      };
+    }
+    return getDomesticRate(form.state, weightKg);
+  }, [isDomestic, isPickup, form.state, lagosArea, weightKg]);
 
   const intlFee = useMemo(
     () => (!isDomestic && !isPickup ? getShippingRate(form.countryCode, weightKg) : null),
@@ -272,6 +294,7 @@ export function CheckoutPage() {
       setForm((f) => ({ ...f, [key]: e.target.value })),
   });
 
+  const lagosAreaFilled = !isDomestic || form.state !== "Lagos" || lagosArea !== "";
   const formFilled = isPickup
     ? [form.firstName, form.lastName, form.email, form.phone].every(
         (v) => v.trim() !== "",
@@ -285,7 +308,7 @@ export function CheckoutPage() {
         form.city,
         form.state,
         form.countryCode,
-      ].every((v) => v.trim() !== "");
+      ].every((v) => v.trim() !== "") && lagosAreaFilled;
   const allFilled = formFilled && termsAccepted;
 
   const buildOrderPayload = (): OrderPayload => ({
@@ -301,7 +324,7 @@ export function CheckoutPage() {
       : {
           address: form.address,
           city: form.city,
-          state: form.state,
+          state: form.state === "Lagos" && lagosArea ? `${form.state} (${lagosArea})` : form.state,
           countryCode: form.countryCode,
           zip: form.zip,
         },
@@ -587,6 +610,43 @@ export function CheckoutPage() {
                 )}
               </Field>
             </div>
+
+            {isDomestic && form.state === "Lagos" && (
+              <Field label="Delivery Zone / Area" required>
+                <select
+                  required
+                  className="input-field"
+                  value={lagosArea}
+                  onChange={(e) => setLagosArea(e.target.value)}
+                >
+                  <option value="">— Select your delivery zone —</option>
+                  <option value="Lagos Mainland">
+                    Lagos Mainland (Yaba, Surulere, Ikeja, Festac, Apapa, etc.) — ₦4,000
+                  </option>
+                  <option value="Lagos Island">
+                    Lagos Island (VI, Ikoyi, Lekki 1, Ajah, Falomo, etc.) — ₦6,000
+                  </option>
+                  <option value="Ajah Corridor">
+                    Ajah Corridor (Sangotedo, LBS, Abijo, Awoyaya, etc.) — ₦7,000
+                  </option>
+                  <option value="Ogun Border Axis">
+                    Ogun Border Axis (Arepo, OPIC, Mowe, Magboro, etc.) — ₦7,000
+                  </option>
+                </select>
+                <p className="mt-1.5 text-[11px] text-ink/50 dark:text-bone/50 leading-normal">
+                  <strong>Mainland:</strong> Yaba, Surulere, Ebute Metta, Mushin, Somolu, Bariga, Gbagada, Maryland, Anthony, Ilupeju, Oshodi, Isolo, Palmgrove, Fadeyi, Ojota, Ketu, Alapere, Ogudu, Magodo, Ikeja, Allen, Opebi, GRA Ikeja, Agege, Ogba, Iju, Abule Egba, Ipaja, Gowon Estate, Egbeda, Ayobo, Iyana Ipaja, Alimosho, Festac, Amuwo Odofin, Iganmu, Apapa, Orile, Coker, Satellite Town, Kirikiri, Mile 2, Badagry, etc.
+                  <br className="mt-1" />
+                  <strong>Island:</strong> Victoria Island, Ikoyi, Banana Island, Lekki Phase 1, Ikate, Oniru, Chevron, Orchid Rd, VGC, Ikota, Osapa London, Jakande, Ajah (to Abraham Adesanya), Marina, Falomo, Eko Atlantic, etc.
+                  <br className="mt-1" />
+                  <strong>Ajah Corridor:</strong> Abraham Adesanya, Ogombo, Sangotedo, Monastery Rd, LBS, Crown Estate, Novare Mall, Abijo, Awoyaya, Lakowe, Bogije, etc.
+                  <br className="mt-1" />
+                  <strong>Ogun Border:</strong> Akute, Alagbole, Berger Ext, Arepo, Warewa, OPIC, Mowe, Magboro, etc.
+                  <br className="mt-1" />
+                  <span className="italic text-gold">Note: If your location is not listed, please contact us before placing your order so we can provide an accurate delivery quote.</span>
+                </p>
+              </Field>
+            )}
+
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Country" required>
                 <select required className="input-field" {...field("countryCode")}>
@@ -887,7 +947,11 @@ export function CheckoutPage() {
                   </span>
                 ) : (
                   <span className="text-xs">
-                    {form.state ? "Rate unavailable" : "Select a state"}
+                    {form.state === "Lagos" && !lagosArea
+                      ? "Select area"
+                      : form.state
+                      ? "Rate unavailable"
+                      : "Select a state"}
                   </span>
                 )
               ) : shippingFee !== null ? (
@@ -913,7 +977,9 @@ export function CheckoutPage() {
             <p className="mt-3 text-[11px] text-ink/40 dark:text-bone/40">
               Weight calculated from your cart ({weightKg} kg incl. packaging).{" "}
               {isDomestic
-                ? "Via Zee Express. Remote location surcharge (₦2,700) may apply. Final rate confirmed at dispatch."
+                ? form.state === "Lagos"
+                  ? "Local delivery. Rate confirmed based on your selected zone."
+                  : "Via Zee Express. Remote location surcharge (₦2,700) may apply. Final rate confirmed at dispatch."
                 : "Via Zee Express. Excludes customs duties and other surcharges. Final rate confirmed at dispatch."}
             </p>
           )}
