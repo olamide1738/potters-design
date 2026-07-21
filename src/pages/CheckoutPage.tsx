@@ -148,24 +148,6 @@ const LAGOS_ZONES = [
   },
 ];
 
-function SearchIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
-  );
-}
-
 export function CheckoutPage() {
   const cart = useStore((s) => s.cart);
   const subtotal = useStore((s) => s.cartSubtotal());
@@ -277,7 +259,7 @@ export function CheckoutPage() {
         const addr = addressData.address || addressData;
         
         // Better address parsing with fallbacks
-        const streetParts = [];
+        const streetParts: string[] = [];
         if (addr.house_number) streetParts.push(addr.house_number);
         if (addr.road) streetParts.push(addr.road);
         if (addr.building) streetParts.push(addr.building);
