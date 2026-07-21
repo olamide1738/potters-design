@@ -199,7 +199,6 @@ export function CheckoutPage() {
     countryCode: "NG",
     zip: "",
   });
-  const [lagosArea, setLagosArea] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [paystackLoaded, setPaystackLoaded] = useState(false);
   const [paystackLoadFailed, setPaystackLoadFailed] = useState(false);
@@ -208,14 +207,112 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "paystack">("bank");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderNote, setOrderNote] = useState("");
+  const [locating, setLocating] = useState(false);
   const isPickup = fulfillment === "pickup";
 
-  // Reset Lagos Area if state changes to non-Lagos
-  useEffect(() => {
-    if (form.state !== "Lagos") {
-      setLagosArea("");
+  // Auto-detect Lagos zone based on city/address input
+  const detectedLagosZone = useMemo(() => {
+    if (form.state !== "Lagos") return null;
+    
+    const searchTerms = [form.city, form.address].filter(Boolean).join(" ").toLowerCase();
+    if (!searchTerms) return null;
+    
+    const foundZone = LAGOS_ZONES.find((z) =>
+      z.areas.some((area) => searchTerms.includes(area.toLowerCase()))
+    );
+    return foundZone?.id || null;
+  }, [form.city, form.address, form.state]);
+
+  // Geolocation function with fallback geocoding services
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      addToast("Geolocation is not supported by your browser");
+      return;
     }
-  }, [form.state]);
+
+    setLocating(true);
+    
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+          }
+        );
+      });
+
+      const { latitude, longitude } = position.coords;
+      
+      // Try multiple geocoding services for better accuracy
+      let addressData = null;
+      
+      // Try Nominatim first (OpenStreetMap)
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+          { headers: { 'User-Agent': 'PottersDesign/1.0' } }
+        );
+        addressData = await response.json();
+      } catch (e) {
+        console.error("Nominatim failed:", e);
+      }
+      
+      // Fallback to BigDataCloud if Nominatim fails or returns poor data
+      if (!addressData || !addressData.address) {
+        try {
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+          addressData = await response.json();
+        } catch (e) {
+          console.error("BigDataCloud failed:", e);
+        }
+      }
+      
+      if (addressData && (addressData.address || addressData.city)) {
+        const addr = addressData.address || addressData;
+        
+        // Better address parsing with fallbacks
+        const streetParts = [];
+        if (addr.house_number) streetParts.push(addr.house_number);
+        if (addr.road) streetParts.push(addr.road);
+        if (addr.building) streetParts.push(addr.building);
+        if (addr.street) streetParts.push(addr.street);
+        
+        // Try to get the most specific city name available
+        const city = addr.city || addr.town || addr.village || addr.suburb || addr.district || addr.county || addr.locality || '';
+        
+        // For Nigeria specifically, try to get the state correctly
+        let state = addr.state || addr.state_code || '';
+        if (!state && addr.region) state = addr.region;
+        if (!state && addr.province) state = addr.province;
+        
+        setForm((prev) => ({
+          ...prev,
+          address: streetParts.length > 0 ? streetParts.join(' ') : prev.address,
+          city: city || prev.city,
+          state: state || prev.state,
+          zip: addr.postcode || addr.postal_code || prev.zip,
+          countryCode: addr.country_code?.toUpperCase() || addr.country?.toUpperCase?.() || prev.countryCode,
+        }));
+        
+        // Show more specific success message
+        const locationName = city || state || 'your location';
+        addToast(`Location detected: ${locationName}. Please verify and edit if needed.`);
+      } else {
+        addToast("Could not determine address from location. Please enter manually.");
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      addToast("Failed to get address from location. Please enter manually.");
+    } finally {
+      setLocating(false);
+    }
+  };
 
   // Auto-switch display currency when country changes
   const prevCode = useRef("NG");
@@ -276,16 +373,16 @@ export function CheckoutPage() {
   const domesticRate = useMemo(() => {
     if (!isDomestic || isPickup) return null;
     if (form.state === "Lagos") {
-      if (!lagosArea) return null;
-      const zone = LAGOS_ZONES.find((z) => z.id === lagosArea);
+      if (!detectedLagosZone) return null;
+      const zone = LAGOS_ZONES.find((z) => z.id === detectedLagosZone);
       return {
         fee: zone?.fee ?? 0,
-        service: `${lagosArea} Delivery`,
+        service: `${detectedLagosZone} Delivery`,
         remoteFee: 0,
       };
     }
     return getDomesticRate(form.state, weightKg);
-  }, [isDomestic, isPickup, form.state, lagosArea, weightKg]);
+  }, [isDomestic, isPickup, form.state, detectedLagosZone, weightKg]);
 
   const intlFee = useMemo(
     () => (!isDomestic && !isPickup ? getShippingRate(form.countryCode, weightKg) : null),
@@ -346,7 +443,7 @@ export function CheckoutPage() {
       setForm((f) => ({ ...f, [key]: e.target.value })),
   });
 
-  const lagosAreaFilled = !isDomestic || form.state !== "Lagos" || lagosArea !== "";
+  const lagosAreaFilled = !isDomestic || form.state !== "Lagos" || detectedLagosZone !== null;
   const formFilled = isPickup
     ? [form.firstName, form.lastName, form.email, form.phone].every(
         (v) => v.trim() !== "",
@@ -376,7 +473,7 @@ export function CheckoutPage() {
       : {
           address: form.address,
           city: form.city,
-          state: form.state === "Lagos" && lagosArea ? `${form.state} (${lagosArea})` : form.state,
+          state: form.state === "Lagos" && detectedLagosZone ? `${form.state} (${detectedLagosZone})` : form.state,
           countryCode: form.countryCode,
           zip: form.zip,
         },
@@ -619,9 +716,35 @@ export function CheckoutPage() {
           {/* Shipping address — hidden when pickup */}
           {!isPickup && (
           <fieldset className="mt-10 space-y-5">
-            <legend className="mb-4 text-xs font-semibold uppercase tracking-widest text-ink/50 dark:text-bone/50">
-              Shipping address
-            </legend>
+            <div className="flex items-center justify-between">
+              <legend className="mb-4 text-xs font-semibold uppercase tracking-widest text-ink/50 dark:text-bone/50">
+                Shipping address
+              </legend>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={locating}
+                className="flex items-center gap-2 text-xs font-semibold text-gold hover:text-gold/80 disabled:text-ink/30 disabled:cursor-not-allowed transition-colors"
+              >
+                {locating ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Detecting...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    Use my current location
+                  </>
+                )}
+              </button>
+            </div>
             <Field label="Street address" required>
               <input
                 type="text"
@@ -673,99 +796,31 @@ export function CheckoutPage() {
             </div>
 
             {isDomestic && form.state === "Lagos" && (
-              <div className="space-y-4 border-t border-mist/30 pt-4 dark:border-edge/30">
+              <div className="space-y-3 border-t border-mist/30 pt-4 dark:border-edge/30">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-ink/70 dark:text-bone/70">
-                    Select Lagos Delivery Zone *
+                    Lagos Delivery Zone
                   </span>
-                  {lagosArea && (
+                  {detectedLagosZone && (
                     <span className="text-xs font-bold text-gold uppercase tracking-wider">
-                      {lagosArea} selected
+                      {detectedLagosZone} - ₦{LAGOS_ZONES.find((z) => z.id === detectedLagosZone)?.fee.toLocaleString()}
                     </span>
                   )}
                 </div>
-
-                {/* Interactive search bar */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Type your area to auto-select zone (e.g. Lekki, GRA, Sangotedo...)"
-                    className="input-field pl-10 pr-4 py-2.5 text-sm w-full"
-                    onChange={(e) => {
-                      const query = e.target.value.toLowerCase().trim();
-                      if (!query) return;
-                      const foundZone = LAGOS_ZONES.find((z) =>
-                        z.areas.some((area) => area.toLowerCase().includes(query))
-                      );
-                      if (foundZone) {
-                        setLagosArea(foundZone.id);
-                      }
-                    }}
-                  />
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/30 dark:text-bone/30">
-                    <SearchIcon />
-                  </div>
-                </div>
-
-                {/* 2x2 grid of zone cards */}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {LAGOS_ZONES.map((zone) => {
-                    const isSelected = lagosArea === zone.id;
-                    return (
-                      <button
-                        key={zone.id}
-                        type="button"
-                        onClick={() => setLagosArea(zone.id)}
-                        className={`flex flex-col items-start justify-between rounded-card border p-4 text-left transition-all hover:scale-[1.01] ${
-                          isSelected
-                            ? "border-gold bg-gold/[0.04] dark:bg-gold/[0.08] ring-1 ring-gold"
-                            : "border-mist hover:border-ink/30 dark:border-edge dark:hover:border-bone/30"
-                        }`}
-                      >
-                        <div className="flex w-full justify-between items-baseline gap-2">
-                          <span className="font-semibold text-xs text-ink dark:text-bone">
-                            {zone.id}
-                          </span>
-                          <span className="font-mono text-xs font-semibold text-gold">
-                            ₦{zone.fee.toLocaleString()}
-                          </span>
-                        </div>
-                        <span className="mt-1 text-[10px] text-ink/40 dark:text-bone/40 line-clamp-1">
-                          {zone.areas.slice(0, 5).join(", ")}...
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Selected zone details card */}
-                {lagosArea && (
-                  <div className="rounded-card border border-gold bg-gold/[0.02] p-4 text-xs dark:bg-gold/[0.04] transition-all">
-                    <div className="flex justify-between items-center mb-2 border-b border-gold/20 pb-2">
-                      <span className="font-bold text-[10px] text-gold uppercase tracking-wider">
-                        {lagosArea} Coverage
-                      </span>
-                      <span className="font-mono font-semibold text-gold">
-                        ₦{LAGOS_ZONES.find((z) => z.id === lagosArea)?.fee.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2 max-h-[140px] overflow-y-auto pr-1">
-                      {LAGOS_ZONES.find((z) => z.id === lagosArea)?.areas.map((area) => (
-                        <span
-                          key={area}
-                          className="px-2 py-0.5 rounded bg-mist/50 dark:bg-edge/50 text-[10px] text-ink/75 dark:text-bone/75 font-medium"
-                        >
-                          {area}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                {detectedLagosZone ? (
+                  <p className="text-xs text-ink/60 dark:text-bone/60">
+                    Zone auto-detected from your address: <span className="font-semibold text-gold">{detectedLagosZone}</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-ink/50 dark:text-bone/50">
+                    Enter your city and address to auto-detect delivery zone
+                  </p>
                 )}
-
-                {/* Website Note */}
-                <p className="text-[10px] italic text-ink/40 dark:text-bone/40">
-                  Note: If your location is not listed, please contact us before placing your order so we can provide an accurate delivery quote.
-                </p>
+                {!detectedLagosZone && (
+                  <p className="text-[10px] italic text-ink/40 dark:text-bone/40">
+                    If your location is not auto-detected, please contact us before placing your order so we can provide an accurate delivery quote.
+                  </p>
+                )}
               </div>
             )}
 
@@ -1078,8 +1133,8 @@ export function CheckoutPage() {
                   </span>
                 ) : (
                   <span className="text-xs">
-                    {form.state === "Lagos" && !lagosArea
-                      ? "Select area"
+                    {form.state === "Lagos" && !detectedLagosZone
+                      ? "Enter address"
                       : form.state
                       ? "Rate unavailable"
                       : "Select a state"}
