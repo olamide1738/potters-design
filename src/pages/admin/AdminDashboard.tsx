@@ -407,22 +407,30 @@ export function AdminDashboard() {
   return (
     <div className="shell py-8">
       {/* Title Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-2">
         <div>
-          <h1 className="font-display text-2xl font-semibold">Store Dashboard</h1>
-          <p className="text-sm text-ink/60 dark:text-bone/60">Manage your shop, check logs & track metrics.</p>
+          <span className="eyebrow tracking-[0.2em] text-gold uppercase text-xs font-semibold block mb-1">
+            Storefront Administration
+          </span>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold uppercase tracking-wide text-ink dark:text-bone">
+            Store Dashboard
+          </h1>
+          <span className="mt-3 block h-1 w-14 rounded-full bg-gold" />
+          <p className="mt-3 text-xs sm:text-sm text-ink/65 dark:text-bone/65">
+            Real-time analytics, inventory management, production pipeline & dispatch logistics.
+          </p>
         </div>
 
         {activeTab === "products" && (
-          <div className="flex flex-wrap items-center gap-3">
-            <button type="button" onClick={handleExport} className="btn-ghost py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button type="button" onClick={handleExport} className="btn-ghost py-2 px-3 text-xs">
               Export JSON
             </button>
-            <label className="btn-ghost py-2 text-xs cursor-pointer">
+            <label className="btn-ghost py-2 px-3 text-xs cursor-pointer">
               Import JSON
               <input type="file" accept=".json" onChange={handleImport} className="hidden" />
             </label>
-            <button type="button" onClick={() => setCreating(true)} className="btn-primary py-2 text-xs">
+            <button type="button" onClick={() => setCreating(true)} className="btn-accent py-2.5 px-4 text-xs font-semibold uppercase tracking-wider">
               + Add product
             </button>
           </div>
@@ -442,22 +450,25 @@ export function AdminDashboard() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="mt-8 flex gap-1 border-b border-mist/70 dark:border-edge/70">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`border-b-2 px-5 py-3 font-display text-sm font-semibold transition-colors -mb-[2px] ${
-              activeTab === tab.id
-                ? "border-gold text-gold"
-                : "border-transparent text-ink/55 hover:text-ink dark:text-bone/55 dark:hover:text-bone"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Tabs Navigation */}
+      <div className="mt-8 flex flex-wrap gap-2 border-b border-mist/70 pb-3 dark:border-edge/70">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-card px-5 py-2.5 font-display text-xs font-semibold uppercase tracking-widest transition-all ${
+                isActive
+                  ? "bg-gold text-ink shadow-sm shadow-gold/20 font-bold"
+                  : "bg-bone/60 text-ink/70 hover:bg-gold/15 hover:text-gold dark:bg-carbon/60 dark:text-bone/70"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── TAB 1: OVERVIEW ──────────────────────────────────────────────── */}
@@ -466,32 +477,32 @@ export function AdminDashboard() {
           {/* Analytics Cards Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Sales Revenue */}
-            <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
-              <span className="text-xs font-semibold uppercase tracking-wider text-ink/40 dark:text-bone/45">Paid Revenue</span>
-              <p className="font-display text-2xl font-bold text-gold mt-2">{formatPrice(analytics.totalSales)}</p>
+            <div className="rounded-card border border-mist bg-bone/90 p-5 shadow-sm dark:border-edge/80 dark:bg-carbon/90 hover:border-gold/50 transition-all">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gold">Paid Revenue</span>
+              <p className="font-display text-2xl lg:text-3xl font-bold text-gold mt-2">{formatPrice(analytics.totalSales)}</p>
               <div className="mt-2 text-xs text-ink/50 dark:text-bone/50">{analytics.paidCount} paid orders</div>
             </div>
 
             {/* Pending Transfer */}
-            <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
-              <span className="text-xs font-semibold uppercase tracking-wider text-ink/40 dark:text-bone/45">Pending Bank Transfer</span>
-              <p className="font-display text-2xl font-bold mt-2 text-ink/80 dark:text-bone/80">{formatPrice(analytics.pendingBank)}</p>
+            <div className="rounded-card border border-mist bg-bone/90 p-5 shadow-sm dark:border-edge/80 dark:bg-carbon/90 hover:border-gold/50 transition-all">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink/50 dark:text-bone/50">Pending Bank Transfer</span>
+              <p className="font-display text-2xl lg:text-3xl font-bold mt-2 text-ink/80 dark:text-bone/80">{formatPrice(analytics.pendingBank)}</p>
               <div className="mt-2 text-xs text-ink/50 dark:text-bone/50">{analytics.pendingCount} pending orders</div>
             </div>
 
             {/* Total Volume */}
-            <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
-              <span className="text-xs font-semibold uppercase tracking-wider text-ink/40 dark:text-bone/45">Order Volume</span>
-              <p className="font-display text-2xl font-bold mt-2 text-ink dark:text-bone">{analytics.totalOrders}</p>
+            <div className="rounded-card border border-mist bg-bone/90 p-5 shadow-sm dark:border-edge/80 dark:bg-carbon/90 hover:border-gold/50 transition-all">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink/50 dark:text-bone/50">Order Volume</span>
+              <p className="font-display text-2xl lg:text-3xl font-bold mt-2 text-ink dark:text-bone">{analytics.totalOrders}</p>
               <div className="mt-2 text-xs text-ink/50 dark:text-bone/50">
                 {analytics.deliveryCount} delivery · {analytics.pickupCount} pickup
               </div>
             </div>
 
             {/* AOV */}
-            <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
-              <span className="text-xs font-semibold uppercase tracking-wider text-ink/40 dark:text-bone/45">Average Order Value (AOV)</span>
-              <p className="font-display text-2xl font-bold text-gold mt-2">{formatPrice(analytics.aov)}</p>
+            <div className="rounded-card border border-mist bg-bone/90 p-5 shadow-sm dark:border-edge/80 dark:bg-carbon/90 hover:border-gold/50 transition-all">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gold">Average Order Value</span>
+              <p className="font-display text-2xl lg:text-3xl font-bold text-gold mt-2">{formatPrice(analytics.aov)}</p>
               <div className="mt-2 text-xs text-ink/50 dark:text-bone/50">calculated from paid orders</div>
             </div>
           </div>

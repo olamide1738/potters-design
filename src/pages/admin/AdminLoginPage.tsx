@@ -31,46 +31,67 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="shell flex min-h-[70vh] items-center justify-center py-16">
+    <div className="shell flex min-h-[75vh] items-center justify-center py-16">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-card border border-mist bg-bone p-8 dark:border-edge dark:bg-ink"
+        className="w-full max-w-md rounded-card border border-mist bg-bone/90 p-8 sm:p-10 shadow-xl shadow-ink/5 dark:border-edge dark:bg-carbon/95 dark:shadow-none"
       >
-        <h1 className="font-display text-2xl font-semibold">Admin sign in</h1>
-        <p className="mt-2 text-sm text-ink/60 dark:text-bone/60">
-          Manage products, inventory and pricing.
-        </p>
+        <div className="text-center mb-6">
+          <img
+            src="/logo.png"
+            alt="Potter's Design"
+            className="mx-auto h-12 w-auto mix-blend-multiply dark:mix-blend-screen"
+          />
+          <span className="eyebrow tracking-[0.2em] text-gold uppercase text-[11px] font-semibold block mt-4">
+            Storefront Management
+          </span>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold uppercase tracking-wide text-ink dark:text-bone mt-1">
+            Admin Portal
+          </h1>
+          <span className="mx-auto mt-3 block h-1 w-12 rounded-full bg-gold" />
+          <p className="mt-3 text-xs sm:text-sm text-ink/65 dark:text-bone/65">
+            Sign in to manage catalog, inventory, orders & production.
+          </p>
+        </div>
 
-        <label className="mt-6 block text-sm font-semibold" htmlFor="email">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="username"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="input-field mt-1"
-        />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink/75 dark:text-bone/75 mb-1" htmlFor="email">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input-field"
+              placeholder="admin@pottersdesign.com"
+            />
+          </div>
 
-        <label className="mt-4 block text-sm font-semibold" htmlFor="password">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="input-field mt-1"
-        />
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink/75 dark:text-bone/75 mb-1" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input-field"
+              placeholder="••••••••"
+            />
+          </div>
+        </div>
 
-        {error && <p className="mt-3 text-sm text-sale">{error}</p>}
+        {error && <p className="mt-4 text-xs font-semibold text-sale bg-sale/10 border border-sale/20 rounded-card p-3 text-center">{error}</p>}
 
-        <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full disabled:opacity-60">
-          {submitting ? "Signing in…" : "Sign in"}
+        <button type="submit" disabled={submitting} className="btn-accent mt-6 w-full py-3.5 text-xs font-semibold uppercase tracking-widest disabled:opacity-60">
+          {submitting ? "Signing in…" : "Sign In to Admin"}
         </button>
       </form>
     </div>
