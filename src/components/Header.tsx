@@ -75,18 +75,23 @@ export function Header() {
         {/* RIGHT: Shop (desktop) + utility icons */}
         <div className="flex items-center justify-end gap-2 lg:gap-4">
           {/* Language switcher */}
-          <select
-            aria-label="Language"
-            value={lang}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="notranslate hidden rounded-card border border-mist bg-transparent px-2 py-1 text-xs font-semibold text-ink dark:border-edge dark:text-bone sm:block"
-          >
-            {LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </select>
+          <div className="notranslate hidden sm:inline-flex relative items-center">
+            <select
+              aria-label="Language"
+              value={lang}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="appearance-none rounded-card border border-mist/80 bg-transparent py-1 pl-2.5 pr-6 text-xs font-semibold uppercase tracking-wider text-ink transition-colors hover:border-gold focus:border-gold focus:outline-none dark:border-edge/80 dark:text-bone cursor-pointer"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code} className="bg-bone text-ink dark:bg-carbon dark:text-bone">
+                  {l.label}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-2 text-[9px] text-ink/50 dark:text-bone/50">
+              ▼
+            </span>
+          </div>
 
           <button
             aria-label="Search"
@@ -162,6 +167,28 @@ export function Header() {
                 {item.label}
               </NavLink>
             ))}
+
+            {/* Mobile Language Switcher */}
+            <div className="notranslate mt-3 pt-3 border-t border-mist/50 dark:border-edge/50 flex items-center justify-between py-2">
+              <span className="text-xs font-semibold text-ink/60 dark:text-bone/60 uppercase">Language</span>
+              <div className="relative inline-flex items-center">
+                <select
+                  aria-label="Language"
+                  value={lang}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="appearance-none rounded-card border border-mist/80 bg-transparent py-1 pl-3 pr-7 text-xs font-semibold uppercase tracking-wider text-ink transition-colors hover:border-gold focus:border-gold focus:outline-none dark:border-edge/80 dark:text-bone cursor-pointer"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code} className="bg-bone text-ink dark:bg-carbon dark:text-bone">
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-2.5 text-[9px] text-ink/50 dark:text-bone/50">
+                  ▼
+                </span>
+              </div>
+            </div>
           </div>
         </nav>
       )}
