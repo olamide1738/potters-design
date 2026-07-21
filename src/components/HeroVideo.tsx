@@ -139,9 +139,10 @@ export function HeroVideo() {
 
       {/* ========================================================================= */}
       {/* DESKTOP & TABLET HERO SLIDER — visible on >= md screens                   */}
+      {/* Matches exact 16:9 aspect ratio of studio photos to prevent any cropping   */}
       {/* ========================================================================= */}
       <div
-        className="hidden md:block relative w-full h-[80vh] min-h-[580px] max-h-[850px]"
+        className="hidden md:block relative w-full aspect-[16/9] max-h-[88vh]"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
