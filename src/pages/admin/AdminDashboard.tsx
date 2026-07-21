@@ -594,7 +594,6 @@ export function AdminDashboard() {
                 {(() => {
                   const maxVal = Math.max(...analytics.weeklySales.map((w) => w.total), 1);
                   const chartH = 140;
-                  const barW = 100 / analytics.weeklySales.length;
                   return (
                     <div>
                       <svg viewBox={`0 0 400 ${chartH + 30}`} className="w-full" aria-label="Weekly sales chart">
