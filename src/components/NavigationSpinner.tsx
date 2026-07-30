@@ -10,12 +10,12 @@ export function NavigationSpinner() {
   useEffect(() => {
     if (document.readyState === "complete") return;
 
-    // Only show spinner if initial webpage load takes > 0.5s (500ms)
+    // Only show spinner if initial webpage load takes > 1.0s (1000ms)
     const timer = setTimeout(() => {
       if (document.readyState !== "complete") {
         setShow(true);
       }
-    }, 500);
+    }, 1000);
 
     const handleLoad = () => {
       clearTimeout(timer);
@@ -34,15 +34,15 @@ export function NavigationSpinner() {
     if (location.pathname !== prevPath.current) {
       prevPath.current = location.pathname;
 
-      // Only show spinner if transition takes > 0.5s (500ms)
+      // Only show spinner if transition takes > 1.0s (1000ms)
       const timer = setTimeout(() => {
         setShow(true);
-      }, 500);
+      }, 1000);
 
       // Hide immediately when route view is ready
       const hideTimer = setTimeout(() => {
         setShow(false);
-      }, 600);
+      }, 300);
 
       return () => {
         clearTimeout(timer);

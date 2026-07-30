@@ -3,14 +3,14 @@ import { useEffect, useState, type ReactNode } from "react";
 interface ComponentLoaderProps {
   children: ReactNode;
   isLoading?: boolean;
-  delayMs?: number; // Only show if load > 0.5s (500ms)
+  delayMs?: number; // Only show if load > 1.0s (1000ms)
   loadingText?: string;
 }
 
 export function ComponentLoader({
   children,
   isLoading = false,
-  delayMs = 500,
+  delayMs = 1000,
   loadingText = "Loading…",
 }: ComponentLoaderProps) {
   const [showSpinner, setShowSpinner] = useState(false);
@@ -19,7 +19,7 @@ export function ComponentLoader({
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     if (isLoading) {
-      // Only show spinner if loading takes more than 0.5s (500ms)
+      // Only show spinner if loading takes more than 1.0s (1000ms)
       timer = setTimeout(() => {
         setShowSpinner(true);
       }, delayMs);
