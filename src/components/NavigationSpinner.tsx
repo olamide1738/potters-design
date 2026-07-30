@@ -6,12 +6,48 @@ export function NavigationSpinner() {
   const [show, setShow] = useState(false);
   const prevPath = useRef(location.pathname);
 
+  // Initial page load listener
+  useEffect(() => {
+    if (document.readyState === "complete") return;
+
+    // Only show spinner if initial webpage load takes > 0.5s (500ms)
+    const timer = setTimeout(() => {
+      if (document.readyState !== "complete") {
+        setShow(true);
+      }
+    }, 500);
+
+    const handleLoad = () => {
+      clearTimeout(timer);
+      setShow(false);
+    };
+
+    window.addEventListener("load", handleLoad);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("load", handleLoad);
+    };
+  }, []);
+
+  // Route change listener
   useEffect(() => {
     if (location.pathname !== prevPath.current) {
       prevPath.current = location.pathname;
-      setShow(true);
-      const t = setTimeout(() => setShow(false), 2000);
-      return () => clearTimeout(t);
+
+      // Only show spinner if transition takes > 0.5s (500ms)
+      const timer = setTimeout(() => {
+        setShow(true);
+      }, 500);
+
+      // Hide immediately when route view is ready
+      const hideTimer = setTimeout(() => {
+        setShow(false);
+      }, 600);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(hideTimer);
+      };
     }
   }, [location.pathname]);
 
