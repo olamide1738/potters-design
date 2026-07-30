@@ -45,7 +45,7 @@ export function HomePage() {
       <section className="bg-ink py-16 text-bone lg:py-24">
         <div className="shell grid gap-14 lg:grid-cols-[0.85fr_1.4fr] lg:items-start lg:gap-16">
           {/* Editorial collage — desktop only */}
-          <Reveal className="relative hidden lg:block">
+          <Reveal className="relative hidden lg:block lg:sticky lg:top-28 lg:self-start">
             <Link to="/shop/asiwaju" className="block overflow-hidden rounded-2xl">
               <img
                 src="/images/products/asiwaju-1.jpg"

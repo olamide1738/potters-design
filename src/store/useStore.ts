@@ -43,12 +43,25 @@ export const useStore = create<StoreState>()(
               ),
             };
           }
+          const colorImgs = color && product.hasColorImages ? product.colorImages?.[color] : null;
+          const lengthImgs = length && product.hasLengthImages ? product.lengthImages?.[length] : null;
+          const commonImgs = colorImgs && lengthImgs ? colorImgs.filter((img) => lengthImgs.includes(img)) : null;
+
+          const lineImage =
+            commonImgs && commonImgs.length > 0
+              ? commonImgs[0]
+              : colorImgs && colorImgs.length > 0
+              ? colorImgs[0]
+              : lengthImgs && lengthImgs.length > 0
+              ? lengthImgs[0]
+              : product.image;
+
           const line: CartLine = {
             productId: product.id,
             slug: product.slug,
             name: product.name,
             unitPrice: priceFloor(product.price),
-            image: product.image,
+            image: lineImage,
             size,
             color,
             length,

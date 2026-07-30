@@ -31,10 +31,10 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="shell flex min-h-[75vh] items-center justify-center py-16">
+    <div className="shell flex min-h-[75vh] items-center justify-center py-16 animate-fade-in">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-card border border-mist bg-bone/90 p-8 sm:p-10 shadow-xl shadow-ink/5 dark:border-edge dark:bg-carbon/95 dark:shadow-none"
+        className="w-full max-w-md rounded-card border border-mist bg-bone/90 p-8 sm:p-10 shadow-xl shadow-ink/5 dark:border-edge dark:bg-carbon/95 dark:shadow-none animate-modal-pop"
       >
         <div className="text-center mb-6">
           <img

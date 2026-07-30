@@ -19,10 +19,16 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Red", "Yellow"],
     sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    lengths: ["Short", "Long"],
     inStock: true,
     onSale: false,
     featured: true,
     hasVariants: true,
+    hasLengthImages: true,
+    lengthImages: {
+      Short: ["/images/products/awero-2.jpg"],
+      Long: ["/images/products/awero-1.jpg", "/images/products/awero-3.jpg"],
+    },
     description:
       "The Awero Dress is a masterpiece of tradition and modern design, beautifully crafted from authentic Yoruba Aso Oke. This elegant piece features bold, structured shoulders and a gracefully flowing asymmetric hem that moves with effortless poise.\n\nDesigned to celebrate strength and femininity, the Awero Dress captures the essence of cultural pride reimagined for today's confident woman. Its rich texture and warm hue make it perfect for special occasions, cultural events, or any moment that calls for timeless elegance.",
     fabric: "Cotton fabric",
@@ -79,6 +85,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "akwete"],
     colors: ["Blue"],
     sizes: ["Free Size"],
+    lengths: ["Short", "Regular", "Tall"],
     inStock: true,
     onSale: false,
     featured: false,
@@ -214,12 +221,33 @@ export const PRODUCTS: Product[] = [
     image: "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
     category: "Bubu",
     tags: ["women", "fashion", "akwete"],
-    colors: ["Gold", "Earth"],
+    colors: ["Yellow", "Gold", "Earth"],
     sizes: ["Free Size"],
+    lengths: ["Short", "Regular", "Tall"],
     inStock: true,
     onSale: false,
     featured: false,
-    hasVariants: false,
+    hasVariants: true,
+    hasColorImages: true,
+    colorImages: {
+      Yellow: [
+        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
+        "/images/products/awero-2.jpg",
+      ],
+      Gold: [
+        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
+      ],
+    },
+    hasLengthImages: true,
+    lengthImages: {
+      Short: [
+        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
+        "/images/products/awero-3.jpg",
+      ],
+      Regular: [
+        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
+      ],
+    },
     description:
       "Whether worn for cultural events, special occasions, or as a fashion statement that pays homage to African heritage, Eyinju reflects our commitment to quality and creativity. Elevate your wardrobe with this exceptional piece that beautifully combines the richness of tradition with modern fashion sensibilities.",
     fabric: "Akwete Woven Fabric",
@@ -272,18 +300,25 @@ export const PRODUCT_TAGS = [
 ];
 
 export const PRODUCT_COLORS = [
-  "Blue",
-  "Copper",
-  "Earth",
-  "Gold",
-  "Gray",
-  "Green",
-  "Ivory",
-  "Lime",
-  "Pink",
-  "Red",
-  "Silver",
-  "Yellow",
+  "Amber", "Amethyst", "Aqua", "Aquamarine", "Army Green", "Beige", "Black", "Blush", "Bottle Green", 
+  "Bronze", "Brown", "Burgundy", "Burnt Orange", "Camel", "Champagne", "Charcoal", "Chartreuse", 
+  "Claret", "Cobalt", "Copper", "Coral", "Cream", "Crimson", "Cyan", "Denim", 
+  "Dusty Pink", "Earth", "Emerald", "Fuchsia", "Gold", "Gray", "Green", "Indigo", "Ivory", "Jade", 
+  "Khaki", "Lavender", "Lemon", "Lilac", "Lime", "Magenta", "Mahogany", "Maroon", "Mauve", 
+  "Midnight Blue", "Mint", "Mustard", "Navy", "Nude", "Ochre", "Olive", "Orange", "Peach", 
+  "Periwinkle", "Pink", "Plum", "Purple", "Red", "Rose", "Rose Gold", "Rust", "Ruby", "Sage", 
+  "Salmon", "Sand", "Sapphire", "Scarlet", "Silver", "Sky Blue", "Slate", "Tan", "Taupe", 
+  "Teal", "Terracotta", "Turquoise", "Vermilion", "Violet", "White", "Wine", "Yellow"
+];
+
+export const PRODUCT_LENGTHS = [
+  "Long",
+  "Short",
+  "Midi",
+  "Mini",
+  "Floor Length",
+  "Knee Length",
+  "Ankle Length",
 ];
 
 // XS–2XL correspond to PD sizes 4–22 (see Size Guide)

@@ -473,7 +473,7 @@ export function AdminDashboard() {
 
       {/* ── TAB 1: OVERVIEW ──────────────────────────────────────────────── */}
       {activeTab === "overview" && (
-        <div className="mt-8 space-y-8">
+        <div key="overview" className="mt-8 space-y-8 animate-slide-up">
           {/* Analytics Cards Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Sales Revenue */}
@@ -685,7 +685,7 @@ export function AdminDashboard() {
 
       {/* ── TAB 2: PRODUCTS ──────────────────────────────────────────────── */}
       {activeTab === "products" && (
-        <div className="mt-8 space-y-4">
+        <div key="products" className="mt-8 space-y-4 animate-slide-up">
           <input
             type="search"
             value={query}
@@ -719,7 +719,19 @@ export function AdminDashboard() {
                           className="h-12 w-10 rounded-card object-cover"
                         />
                         <div>
-                          <p className="font-semibold">{product.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold">{product.name}</p>
+                            {product.hasColorImages && (
+                              <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold" title="Color variation images enabled">
+                                Color Images
+                              </span>
+                            )}
+                            {product.hasLengthImages && (
+                              <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold" title="Length variation images enabled">
+                                Length Images
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-ink/50 dark:text-bone/50">/{product.slug}</p>
                         </div>
                       </div>
@@ -770,7 +782,7 @@ export function AdminDashboard() {
 
       {/* ── TAB 3: ORDERS ───────────────────────────────────────────────── */}
       {activeTab === "orders" && (
-        <div className="mt-8 space-y-4">
+        <div key="orders" className="mt-8 space-y-4 animate-slide-up">
           {/* Filters Row */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <input
@@ -868,7 +880,7 @@ export function AdminDashboard() {
 
       {/* ── TAB 4: PIPELINE ─────────────────────────────────────────────── */}
       {activeTab === "pipeline" && (
-        <div className="mt-8 space-y-8">
+        <div key="pipeline" className="mt-8 space-y-8 animate-slide-up">
           {/* Tailoring Cut Sheet */}
           <div className="rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-carbon">
             <div className="flex items-center gap-3 mb-1">
@@ -969,7 +981,7 @@ export function AdminDashboard() {
 
       {/* ── TAB 5: LOGISTICS ────────────────────────────────────────────── */}
       {activeTab === "logistics" && (
-        <div className="mt-8 space-y-6">
+        <div key="logistics" className="mt-8 space-y-6 animate-slide-up">
           {/* Filters + Export */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -1120,8 +1132,8 @@ export function AdminDashboard() {
 
       {/* ── MODAL: ORDER DETAILS DRAWER ─────────────────────────────────── */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/65 p-4 backdrop-blur-sm">
-          <div className="my-8 w-full max-w-3xl rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-ink">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/65 p-4 backdrop-blur-md animate-fade-in">
+          <div className="my-8 w-full max-w-3xl rounded-card border border-mist bg-bone p-6 dark:border-edge dark:bg-ink shadow-2xl animate-modal-pop">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-mist/50 pb-4 dark:border-edge/50">
               <div>

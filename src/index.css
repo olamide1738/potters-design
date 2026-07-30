@@ -35,9 +35,79 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes img-switch {
+  0%   { opacity: 0.35; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-img-switch {
+  animation: img-switch 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes loop-fade-in {
+  0%   { opacity: 0; filter: blur(3px); transform: scale(1.02); }
+  100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+.animate-loop-fade {
+  animation: loop-fade-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Custom aesthetic scrollbar */
+.aesthetic-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 163, 89, 0.4) transparent;
+}
+
+.aesthetic-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.aesthetic-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.aesthetic-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 163, 89, 0.35);
+  border-radius: 9999px;
+}
+
+.aesthetic-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 163, 89, 0.7);
+}
+
 /* Gentle fade played on each route change (see RootLayout) */
 .animate-fade-in {
   animation: fade-in 0.45s ease-out both;
+}
+
+@keyframes slide-up-fade {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modal-pop {
+  0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+.animate-slide-up {
+  animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-modal-pop {
+  animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-badge-pulse {
+  animation: badge-pulse 2.5s infinite ease-in-out;
 }
 
 @layer base {

@@ -25,11 +25,21 @@ export interface Product {
   featured: boolean;
   /** true when the product has selectable variants ("Select options") */
   hasVariants: boolean;
+  lengths?: string[];
   /** Fine-grained stock toggling for variant options */
   variantStock?: {
     sizes?: Record<string, boolean>;
     colors?: Record<string, boolean>;
+    lengths?: Record<string, boolean>;
   };
+  /** true when color-specific images are enabled */
+  hasColorImages?: boolean;
+  /** Mapping of color name to image URLs for that variation */
+  colorImages?: Record<string, string[]>;
+  /** true when length-specific images are enabled */
+  hasLengthImages?: boolean;
+  /** Mapping of length name (e.g. "Long", "Short") to image URLs for that variation */
+  lengthImages?: Record<string, string[]>;
   description?: string;
   fabric?: string;
   careInstructions?: string;

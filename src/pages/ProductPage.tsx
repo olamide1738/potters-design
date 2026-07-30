@@ -16,6 +16,37 @@ const PLACEHOLDER = "/hanger-placeholder.svg";
 
 type Tab = "description" | "ordering" | "shipping";
 
+function FadingProductImage({ src, alt }: { src: string; alt: string }) {
+  const [displayedSrc, setDisplayedSrc] = useState(src);
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    if (src !== displayedSrc) {
+      setOpacity(0);
+      const timer = setTimeout(() => {
+        setDisplayedSrc(src);
+        setOpacity(1);
+      }, 180);
+      return () => clearTimeout(timer);
+    }
+  }, [src, displayedSrc]);
+
+  return (
+    <img
+      src={displayedSrc}
+      alt={alt}
+      onError={(e) => {
+        (e.target as HTMLImageElement).src = PLACEHOLDER;
+      }}
+      style={{
+        opacity,
+        transition: "opacity 0.45s ease-in-out",
+      }}
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
 export function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -43,27 +74,54 @@ export function ProductPage() {
     return () => clearInterval(id);
   }, []);
 
+  const [lastSelectedVariation, setLastSelectedVariation] = useState<"color" | "length" | null>(null);
+
+  // Color or Length-specific gallery images if available
+  const colorGallery =
+    color && product?.hasColorImages && product.colorImages?.[color]?.length
+      ? product.colorImages[color]
+      : null;
+
+  const lengthGallery =
+    length && product?.hasLengthImages && product.lengthImages?.[length]?.length
+      ? product.lengthImages[length]
+      : null;
+
+  // Intersection logic: if BOTH color AND length are selected,
+  // find the set of images common to ONLY both variant image sets!
+  const intersectionGallery =
+    colorGallery && lengthGallery
+      ? colorGallery.filter((img) => lengthGallery.includes(img))
+      : null;
+
+  const activeVariationGallery =
+    intersectionGallery && intersectionGallery.length > 0
+      ? intersectionGallery
+      : lastSelectedVariation === "length"
+      ? (lengthGallery ?? colorGallery)
+      : (colorGallery ?? lengthGallery);
+
   // Auto-advance carousel
-  const imgs = product?.gallery?.length ? product.gallery : product ? [product.image] : [];
+  const imgs = activeVariationGallery ?? (product?.gallery?.length ? product.gallery : product ? [product.image] : []);
   useEffect(() => {
     if (imgs.length <= 1) return;
     const startTimer = () => {
       if (carouselTimer.current) clearInterval(carouselTimer.current);
       carouselTimer.current = setInterval(() => {
         setActiveImg((prev) => (prev + 1) % imgs.length);
-      }, 10_000);
+      }, 5_000);
     };
     startTimer();
     return () => { if (carouselTimer.current) clearInterval(carouselTimer.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product?.id]);
+  }, [product?.id, color, length, lastSelectedVariation, imgs.length]);
 
   const pickThumb = (i: number) => {
     setActiveImg(i);
     if (carouselTimer.current) clearInterval(carouselTimer.current);
     carouselTimer.current = setInterval(() => {
       setActiveImg((prev) => (prev + 1) % imgs.length);
-    }, 10_000);
+    }, 5_000);
   };
 
   if (!product) {
@@ -79,7 +137,15 @@ export function ProductPage() {
 
   const needsSize = product.sizes.length > 0 && product.sizes[0] !== "Free Size";
   const needsColor = product.colors.length > 0;
-  const needsLength = ["dresses", "pants", "2-pieces"].includes(product.category.toLowerCase());
+  const availableLengths =
+    product.lengths && product.lengths.length > 0
+      ? product.lengths
+      : product.hasLengthImages && product.lengthImages && Object.keys(product.lengthImages).length > 0
+      ? Object.keys(product.lengthImages)
+      : ["bubu", "dresses", "pants", "2-pieces"].includes(product.category.toLowerCase())
+      ? ["Short", "Regular", "Tall"]
+      : [];
+  const needsLength = availableLengths.length > 0;
   const canAdd =
     product.inStock && (!needsSize || size) && (!needsColor || color) && (!needsLength || length);
 
@@ -150,25 +216,29 @@ export function ProductPage() {
         {/* Gallery */}
         {(() => {
           const current = imgs[activeImg] ?? imgs[0];
-          const thumbs = imgs.map((src, i) => ({ src, i })).filter(({ i }) => i !== activeImg);
+
+          const prevImg = () => {
+            pickThumb((activeImg - 1 + imgs.length) % imgs.length);
+          };
+          const nextImg = () => {
+            pickThumb((activeImg + 1) % imgs.length);
+          };
+
           return (
-            <div className="space-y-3">
-              <div className="aspect-[3/4] overflow-hidden rounded-card bg-surface dark:bg-carbon">
-                <img
-                  key={current}
-                  src={current}
-                  alt={product.name}
-                  onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER; }}
-                  className="h-full w-full object-cover transition-opacity duration-300"
-                />
-              </div>
+            <div className="flex flex-col-reverse sm:flex-row gap-3.5 lg:sticky lg:top-24 lg:self-start">
+              {/* Vertical Thumbnails Column on Left */}
               {imgs.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-1.5">
-                  {thumbs.map(({ src, i }) => (
+                <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:max-h-[640px] shrink-0 aesthetic-scrollbar pb-1 sm:pb-0 sm:pr-1">
+                  {imgs.map((src, i) => (
                     <button
                       key={i}
                       onClick={() => pickThumb(i)}
-                      className="aspect-square h-20 w-20 shrink-0 overflow-hidden rounded-card border border-mist transition-colors hover:border-ink/60 dark:border-edge dark:hover:border-bone/60"
+                      className={cn(
+                        "aspect-square h-20 w-20 shrink-0 overflow-hidden rounded-card border transition-all duration-200",
+                        i === activeImg
+                          ? "border-gold ring-2 ring-gold/40 shadow-sm opacity-100"
+                          : "border-mist opacity-70 hover:border-ink/60 hover:opacity-100 dark:border-edge dark:hover:border-bone/60",
+                      )}
                     >
                       <img
                         src={src}
@@ -180,6 +250,35 @@ export function ProductPage() {
                   ))}
                 </div>
               )}
+
+              {/* Big Display Image Container (10% Larger: max-h-[640px]) */}
+              <div className="group relative flex-1 aspect-[3/3.9] max-h-[640px] overflow-hidden rounded-card bg-surface dark:bg-carbon shadow-sm">
+                <FadingProductImage src={current} alt={product.name} />
+
+                {/* Left/Right Navigation Arrows */}
+                {imgs.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImg}
+                      aria-label="Previous image"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-bone/80 text-ink shadow-md backdrop-blur transition-all duration-200 hover:bg-gold hover:text-ink opacity-80 group-hover:opacity-100 dark:bg-carbon/80 dark:text-bone dark:hover:bg-gold dark:hover:text-ink"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={nextImg}
+                      aria-label="Next image"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-bone/80 text-ink shadow-md backdrop-blur transition-all duration-200 hover:bg-gold hover:text-ink opacity-80 group-hover:opacity-100 dark:bg-carbon/80 dark:text-bone dark:hover:bg-gold dark:hover:text-ink"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           );
         })()}
@@ -231,20 +330,32 @@ export function ProductPage() {
               <div className="flex flex-wrap gap-2">
                 {product.colors.map((c) => {
                   const colorOos = product.variantStock?.colors?.[c] === false;
+                  const firstColorImg = product.hasColorImages ? product.colorImages?.[c]?.[0] : null;
                   return (
                   <button
                     key={c}
-                    onClick={() => setColor(c)}
+                    onClick={() => {
+                      setColor(c);
+                      setLastSelectedVariation("color");
+                      setActiveImg(0);
+                    }}
                     disabled={colorOos}
                     className={cn(
-                      "rounded-card border px-4 py-2 text-sm transition-colors",
+                      "flex items-center gap-2 rounded-card border px-3.5 py-2 text-sm transition-colors",
                       color === c
                         ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
                         : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
                       colorOos && "cursor-not-allowed opacity-40 line-through",
                     )}
                   >
-                    {c}
+                    {firstColorImg && (
+                      <img
+                        src={firstColorImg}
+                        alt={c}
+                        className="h-4 w-4 rounded-full object-cover border border-mist/60"
+                      />
+                    )}
+                    <span>{c}</span>
                   </button>
                   );
                 })}
@@ -309,20 +420,37 @@ export function ProductPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {["Short", "Regular", "Tall"].map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLength(l)}
-                    className={cn(
-                      "min-w-16 rounded-card border px-3 py-2 text-sm transition-colors",
-                      length === l
-                        ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
-                        : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
-                    )}
-                  >
-                    {l}
-                  </button>
-                ))}
+                {availableLengths.map((l) => {
+                  const lengthOos = product.variantStock?.lengths?.[l] === false;
+                  const firstLengthImg = product.hasLengthImages ? product.lengthImages?.[l]?.[0] : null;
+                  return (
+                    <button
+                      key={l}
+                      onClick={() => {
+                        setLength(l);
+                        setLastSelectedVariation("length");
+                        setActiveImg(0);
+                      }}
+                      disabled={lengthOos}
+                      className={cn(
+                        "flex items-center gap-2 rounded-card border px-3.5 py-2 text-sm transition-colors",
+                        length === l
+                          ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
+                          : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
+                        lengthOos && "cursor-not-allowed opacity-40 line-through",
+                      )}
+                    >
+                      {firstLengthImg && (
+                        <img
+                          src={firstLengthImg}
+                          alt={l}
+                          className="h-4 w-4 rounded-full object-cover border border-mist/60"
+                        />
+                      )}
+                      <span>{l}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -449,18 +577,18 @@ export function ProductPage() {
 
       {/* ── Product tabs ──────────────────────────────────────────────────── */}
       <div className="shell pb-20">
-        {/* Tab bar */}
+        {/* Tab bar - Centered */}
         <div className="border-b border-mist dark:border-edge">
-          <div className="flex gap-0 overflow-x-auto">
+          <div className="flex gap-2 sm:gap-6 overflow-x-auto justify-center">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "shrink-0 border-b-2 px-5 py-4 text-sm font-medium transition-colors",
+                  "shrink-0 border-b-2 px-6 py-4 text-sm font-semibold transition-colors",
                   activeTab === tab.key
-                    ? "border-ink text-ink dark:border-bone dark:text-bone"
-                    : "border-transparent text-ink/45 hover:text-ink/70 dark:text-bone/45 dark:hover:text-bone/70",
+                    ? "border-gold text-gold dark:border-gold dark:text-gold"
+                    : "border-transparent text-ink/50 hover:text-ink dark:text-bone/50 dark:hover:text-bone",
                 )}
               >
                 {tab.label}
@@ -470,49 +598,52 @@ export function ProductPage() {
         </div>
 
         {/* Tab content */}
-        <div className="max-w-2xl py-8 text-sm leading-relaxed text-ink/70 dark:text-bone/70">
+        <div className="w-full max-w-4xl mx-auto py-8 text-sm leading-relaxed text-ink/80 dark:text-bone/80">
           {activeTab === "description" && (
-            <div className="space-y-6">
+            <div className="rounded-card border border-mist/80 bg-surface/30 p-6 sm:p-8 dark:border-edge/80 dark:bg-carbon/30 shadow-sm space-y-6">
               {product.description && (
-                <div className="space-y-3">
+                <div className="space-y-4 leading-relaxed text-base text-ink/85 dark:text-bone/85">
                   {product.description.split("\n\n").map((para, i) => (
                     <p key={i}>{para}</p>
                   ))}
                 </div>
               )}
               {(product.fabric || product.careInstructions || product.weightKg || product.dimensions) && (
-                <dl className="mt-6 divide-y divide-mist dark:divide-edge">
-                  {product.fabric && (
-                    <div className="flex gap-4 py-3">
-                      <dt className="w-32 shrink-0 font-semibold text-ink dark:text-bone">Fabric</dt>
-                      <dd>{product.fabric}</dd>
-                    </div>
-                  )}
-                  {product.careInstructions && (
-                    <div className="flex gap-4 py-3">
-                      <dt className="w-32 shrink-0 font-semibold text-ink dark:text-bone">Care</dt>
-                      <dd>{product.careInstructions}</dd>
-                    </div>
-                  )}
-                  {product.dimensions && (
-                    <div className="flex gap-4 py-3">
-                      <dt className="w-32 shrink-0 font-semibold text-ink dark:text-bone">Dimensions</dt>
-                      <dd>{product.dimensions}</dd>
-                    </div>
-                  )}
-                  {product.weightKg && (
-                    <div className="flex gap-4 py-3">
-                      <dt className="w-32 shrink-0 font-semibold text-ink dark:text-bone">Weight</dt>
-                      <dd>{product.weightKg}</dd>
-                    </div>
-                  )}
-                </dl>
+                <div className="mt-6 pt-6 border-t border-mist/80 dark:border-edge/80">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-gold mb-4">Specifications & Care</h3>
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {product.fabric && (
+                      <div className="rounded-card bg-bone/60 p-3.5 dark:bg-ink/60 border border-mist/50 dark:border-edge/50">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-ink/50 dark:text-bone/50">Fabric</dt>
+                        <dd className="mt-1 font-medium text-ink dark:text-bone">{product.fabric}</dd>
+                      </div>
+                    )}
+                    {product.careInstructions && (
+                      <div className="rounded-card bg-bone/60 p-3.5 dark:bg-ink/60 border border-mist/50 dark:border-edge/50">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-ink/50 dark:text-bone/50">Care Instructions</dt>
+                        <dd className="mt-1 font-medium text-ink dark:text-bone">{product.careInstructions}</dd>
+                      </div>
+                    )}
+                    {product.dimensions && (
+                      <div className="rounded-card bg-bone/60 p-3.5 dark:bg-ink/60 border border-mist/50 dark:border-edge/50">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-ink/50 dark:text-bone/50">Dimensions</dt>
+                        <dd className="mt-1 font-medium text-ink dark:text-bone">{product.dimensions}</dd>
+                      </div>
+                    )}
+                    {product.weightKg && (
+                      <div className="rounded-card bg-bone/60 p-3.5 dark:bg-ink/60 border border-mist/50 dark:border-edge/50">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-ink/50 dark:text-bone/50">Weight</dt>
+                        <dd className="mt-1 font-medium text-ink dark:text-bone">{product.weightKg}</dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
               )}
             </div>
           )}
 
           {activeTab === "ordering" && (
-            <div className="space-y-8 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="rounded-card border border-mist/80 bg-surface/30 p-6 sm:p-8 dark:border-edge/80 dark:bg-carbon/30 shadow-sm max-h-[460px] overflow-y-auto aesthetic-scrollbar space-y-8">
               <Section title="Order processing">
                 <p>
                   Most of our pieces are made-to-order and produced after purchase
@@ -555,7 +686,7 @@ export function ProductPage() {
                   at{" "}
                   <a
                     href="mailto:pottersdesigning@gmail.com"
-                    className="font-medium text-ink underline underline-offset-4 hover:text-gold dark:text-bone"
+                    className="font-medium text-gold underline underline-offset-4 hover:text-[#fda437]"
                   >
                     pottersdesigning@gmail.com
                   </a>
@@ -566,7 +697,7 @@ export function ProductPage() {
           )}
 
           {activeTab === "shipping" && (
-            <div className="space-y-8 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="rounded-card border border-mist/80 bg-surface/30 p-6 sm:p-8 dark:border-edge/80 dark:bg-carbon/30 shadow-sm max-h-[460px] overflow-y-auto aesthetic-scrollbar space-y-8">
               <Section title="Shipping">
                 <p>
                   Shipping costs are calculated based on the weight of your order

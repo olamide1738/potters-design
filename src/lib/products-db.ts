@@ -49,7 +49,16 @@ export async function deleteProduct(id: number): Promise<void> {
   await deleteDoc(doc(db, COLLECTION, docId(id)));
 }
 
-/** Upload an image file to Cloudinary or Firebase Storage based on configuration. */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Upload an image file to Cloudinary or Firebase Storage based on configuration, falling back gracefully to Data URL. */
 export async function uploadProductImage(
   file: File,
   slug: string,
@@ -57,49 +66,53 @@ export async function uploadProductImage(
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
+  // 1. Try Cloudinary
   if (cloudName && uploadPreset) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
-    formData.append("folder", `products/${slug}`);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+      formData.append("folder", `products/${slug}`);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: "POST",
-      body: formData,
-    });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message ?? "Cloudinary upload failed.");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.secure_url) return data.secure_url;
+      } else {
+        console.warn("Cloudinary upload response not OK:", res.statusText);
+      }
+    } catch (err) {
+      console.warn("Cloudinary upload failed, trying fallback:", err);
     }
-
-    const data = await res.json();
-    return data.secure_url;
   }
 
-  // Fallback to Firebase Storage
-  const safeSlug = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-") || "product";
-  const path = `products/${safeSlug}/${Date.now()}-${file.name}`;
-  const storageRef = ref(storage, path);
-  
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(
-      () =>
-        reject(
-          new Error(
-            "Upload timed out. Ensure Firebase Storage is initialized in your Firebase Console, and the bucket name in .env matches."
-          )
-        ),
-      15000
-    )
-  );
+  // 2. Try Firebase Storage
+  try {
+    const safeSlug = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-") || "product";
+    const path = `products/${safeSlug}/${Date.now()}-${file.name}`;
+    const storageRef = ref(storage, path);
+    
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Firebase Storage timeout")), 8000)
+    );
 
-  await Promise.race([
-    uploadBytes(storageRef, file),
-    timeoutPromise
-  ]);
-  
-  return getDownloadURL(storageRef);
+    await Promise.race([
+      uploadBytes(storageRef, file),
+      timeoutPromise
+    ]);
+    
+    const url = await getDownloadURL(storageRef);
+    if (url) return url;
+  } catch (err) {
+    console.warn("Firebase Storage upload failed, using Data URL fallback:", err);
+  }
+
+  // 3. Fallback to base64 Data URL so admin uploads work seamlessly offline or without configured cloud storage
+  return fileToDataUrl(file);
 }
 
 /** Best-effort removal of a previously uploaded Storage image by its URL. */
