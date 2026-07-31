@@ -248,6 +248,18 @@ export const PRODUCTS: Product[] = [
         "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
       ],
     },
+    hasCombinedVariantImages: true,
+    combinedVariantImages: {
+      Yellow_Short: [
+        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
+      ],
+      Yellow_Regular: [
+        "/images/products/awero-2.jpg",
+      ],
+      Gold_Short: [
+        "/images/products/awero-3.jpg",
+      ],
+    },
     description:
       "Whether worn for cultural events, special occasions, or as a fashion statement that pays homage to African heritage, Eyinju reflects our commitment to quality and creativity. Elevate your wardrobe with this exceptional piece that beautifully combines the richness of tradition with modern fashion sensibilities.",
     fabric: "Akwete Woven Fabric",

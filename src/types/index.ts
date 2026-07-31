@@ -40,6 +40,10 @@ export interface Product {
   hasLengthImages?: boolean;
   /** Mapping of length name (e.g. "Long", "Short") to image URLs for that variation */
   lengthImages?: Record<string, string[]>;
+  /** true when combined variant images (e.g. Color + Size, Color + Length) are enabled */
+  hasCombinedVariantImages?: boolean;
+  /** Mapping of combined variation key (e.g. "Green_Small", "Green_Short") to image URLs */
+  combinedVariantImages?: Record<string, string[]>;
   description?: string;
   fabric?: string;
   careInstructions?: string;

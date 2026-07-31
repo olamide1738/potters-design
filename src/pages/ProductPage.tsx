@@ -94,8 +94,26 @@ export function ProductPage() {
       ? colorGallery.filter((img) => lengthGallery.includes(img))
       : null;
 
+  // Combined variation images check (e.g. Color + Size, Color + Length, Color + Size + Length)
+  const combinedKey3 = color && size && length ? `${color}_${size}_${length}` : null;
+  const combinedKey2Size = color && size ? `${color}_${size}` : null;
+  const combinedKey2Length = color && length ? `${color}_${length}` : null;
+
+  const combinedGallery =
+    product?.hasCombinedVariantImages && product?.combinedVariantImages
+      ? (combinedKey3 && product.combinedVariantImages[combinedKey3]?.length
+          ? product.combinedVariantImages[combinedKey3]
+          : combinedKey2Size && product.combinedVariantImages[combinedKey2Size]?.length
+          ? product.combinedVariantImages[combinedKey2Size]
+          : combinedKey2Length && product.combinedVariantImages[combinedKey2Length]?.length
+          ? product.combinedVariantImages[combinedKey2Length]
+          : null)
+      : null;
+
   const activeVariationGallery =
-    intersectionGallery && intersectionGallery.length > 0
+    combinedGallery && combinedGallery.length > 0
+      ? combinedGallery
+      : intersectionGallery && intersectionGallery.length > 0
       ? intersectionGallery
       : lastSelectedVariation === "length"
       ? (lengthGallery ?? colorGallery)

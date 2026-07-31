@@ -99,6 +99,11 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
   const [lengthUploading, setLengthUploading] = useState<Record<string, boolean>>({});
   const [lengthUrlInputs, setLengthUrlInputs] = useState<Record<string, string>>({});
 
+  const [hasCombinedVariantImages, setHasCombinedVariantImages] = useState(initial?.hasCombinedVariantImages ?? false);
+  const [combinedVariantImages, setCombinedVariantImages] = useState<Record<string, string[]>>(initial?.combinedVariantImages ?? {});
+  const [combinedUploading, setCombinedUploading] = useState<Record<string, boolean>>({});
+  const [combinedUrlInputs, setCombinedUrlInputs] = useState<Record<string, string>>({});
+
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -242,13 +247,54 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       ...prev,
       [lengthVal]: (prev[lengthVal] ?? []).filter((u) => u !== url),
     }));
-  };
-
-  const handleSetPrimaryLengthImage = (lengthVal: string, url: string) => {
+  };  const handleSetPrimaryLengthImage = (lengthVal: string, url: string) => {
     setLengthImages((prev) => {
       const list = prev[lengthVal] ?? [];
       const filtered = list.filter((u) => u !== url);
       return { ...prev, [lengthVal]: [url, ...filtered] };
+    });
+  };
+
+  const handleCombinedImagesUpload = async (key: string, e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setCombinedUploading((prev) => ({ ...prev, [key]: true }));
+    try {
+      const urls = await Promise.all(files.map((f) => uploadProductImage(f, effectiveSlug)));
+      setCombinedVariantImages((prev) => ({
+        ...prev,
+        [key]: [...(prev[key] ?? []), ...urls],
+      }));
+    } catch {
+      setError("Failed to upload combined variant image.");
+    } finally {
+      setCombinedUploading((prev) => ({ ...prev, [key]: false }));
+      e.target.value = "";
+    }
+  };
+
+  const handleCombinedUrlAdd = (key: string) => {
+    const url = (combinedUrlInputs[key] ?? "").trim();
+    if (!url) return;
+    setCombinedVariantImages((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] ?? []), url],
+    }));
+    setCombinedUrlInputs((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  const handleRemoveCombinedImage = (key: string, url: string) => {
+    setCombinedVariantImages((prev) => ({
+      ...prev,
+      [key]: (prev[key] ?? []).filter((u) => u !== url),
+    }));
+  };
+
+  const handleSetPrimaryCombinedImage = (key: string, url: string) => {
+    setCombinedVariantImages((prev) => {
+      const list = prev[key] ?? [];
+      const filtered = list.filter((u) => u !== url);
+      return { ...prev, [key]: [url, ...filtered] };
     });
   };
 
@@ -266,7 +312,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       finalPrice = [lo, hi];
     } else {
       const p = Number(price);
-      if (!p) return setError("Enter a valid price.");
+      if (!p || p <= 0) return setError("Enter a valid price.");
       finalPrice = p;
     }
 
@@ -292,6 +338,8 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       ...(hasColorImages && Object.keys(colorImages).length ? { colorImages } : {}),
       hasLengthImages,
       ...(hasLengthImages && Object.keys(lengthImages).length ? { lengthImages } : {}),
+      hasCombinedVariantImages,
+      ...(hasCombinedVariantImages && Object.keys(combinedVariantImages).length ? { combinedVariantImages } : {}),
       ...(description.trim() ? { description: description.trim() } : {}),
       ...(fabric.trim() ? { fabric: fabric.trim() } : {}),
       ...(careInstructions.trim() ? { careInstructions: careInstructions.trim() } : {}),
@@ -482,13 +530,14 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
         </div>
 
         {/* Flags */}
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-7">
           <CheckRow label="In stock" checked={inStock} onChange={setInStock} />
           <CheckRow label="On sale" checked={onSale} onChange={setOnSale} />
           <CheckRow label="Featured" checked={featured} onChange={setFeatured} />
           <CheckRow label="Has variants" checked={hasVariants} onChange={setHasVariants} />
           <CheckRow label="Color images" checked={hasColorImages} onChange={setHasColorImages} />
           <CheckRow label="Length images" checked={hasLengthImages} onChange={setHasLengthImages} />
+          <CheckRow label="Combined images" checked={hasCombinedVariantImages} onChange={setHasCombinedVariantImages} />
         </div>
 
         {/* Color Variation Images Section */}
@@ -681,6 +730,110 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                       </div>
                     </div>
                   );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Combined Variation Images Section */}
+        {hasCombinedVariantImages && (
+          <div className="mt-4 rounded-card border border-gold/40 bg-gold/5 p-4 dark:border-gold/30 dark:bg-gold/10">
+            <span className="block text-sm font-semibold text-gold">Combined Variation Images (Color + Size / Length)</span>
+            <p className="mt-1 text-xs text-ink/70 dark:text-bone/70">
+              Link specific images to combined variations (e.g. Green + Small, Green + Short). When a customer selects both criteria on the product page, these specific combined images will reflect automatically.
+            </p>
+
+            {colors.length === 0 ? (
+              <p className="mt-3 text-xs italic text-sale">
+                Please select at least one color above to configure combined variation images.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {colors.map((c) => {
+                  const subOptions = sizes.length > 0 ? sizes : (lengths.length > 0 ? lengths : ["Default"]);
+                  return subOptions.map((s) => {
+                    const key = `${c}_${s}`;
+                    const label = `${c} + ${s}`;
+                    const imgs = combinedVariantImages[key] ?? [];
+                    const isUploading = combinedUploading[key] ?? false;
+
+                    return (
+                      <div key={key} className="rounded-card border border-mist bg-bone/80 p-3 dark:border-edge dark:bg-ink/80">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-bone flex items-center gap-2">
+                            <span className="h-3 w-3 rounded-full border border-mist dark:border-edge bg-gold inline-block"></span>
+                            {label} Images
+                          </span>
+                          <span className="text-[11px] text-ink/50 dark:text-bone/50">
+                            {imgs.length} image{imgs.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
+
+                        {/* Thumbnails */}
+                        {imgs.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {imgs.map((url, idx) => (
+                              <div key={url + idx} className="relative h-20 w-16 overflow-hidden rounded-card border border-mist dark:border-edge">
+                                <img src={url} alt={`${label} ${idx}`} className="h-full w-full object-cover" />
+                                {idx === 0 ? (
+                                  <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold text-ink">
+                                    Primary
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetPrimaryCombinedImage(key, url)}
+                                    className="absolute bottom-0 left-0 right-0 bg-ink/70 py-0.5 text-center text-[9px] text-bone hover:bg-ink"
+                                  >
+                                    Set main
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveCombinedImage(key, url)}
+                                  className="absolute right-0 top-0 bg-ink/70 px-1 text-xs text-bone hover:bg-sale"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Upload & URL Controls */}
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                          <label className="btn-ghost cursor-pointer text-xs py-1 px-2.5">
+                            {isUploading ? "Uploading…" : `+ Upload ${label} Image(s)`}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => handleCombinedImagesUpload(key, e)}
+                              className="hidden"
+                              disabled={isUploading}
+                            />
+                          </label>
+                          <div className="flex flex-1 items-center gap-1.5 min-w-[200px]">
+                            <input
+                              type="url"
+                              value={combinedUrlInputs[key] ?? ""}
+                              onChange={(e) => setCombinedUrlInputs((prev) => ({ ...prev, [key]: e.target.value }))}
+                              placeholder={`Or paste ${label} image URL`}
+                              className="input-field py-1 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleCombinedUrlAdd(key)}
+                              className="btn bg-gold px-2.5 py-1 text-xs font-medium text-ink hover:bg-[#fda437] hover:text-white shrink-0"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
                 })}
               </div>
             )}
