@@ -4,14 +4,12 @@ interface ComponentLoaderProps {
   children: ReactNode;
   isLoading?: boolean;
   delayMs?: number; // Only show if load > 1.0s (1000ms)
-  loadingText?: string;
 }
 
 export function ComponentLoader({
   children,
   isLoading = false,
   delayMs = 1000,
-  loadingText = "Loading…",
 }: ComponentLoaderProps) {
   const [showSpinner, setShowSpinner] = useState(false);
 
