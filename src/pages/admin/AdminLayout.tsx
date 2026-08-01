@@ -48,7 +48,7 @@ export function AdminLayout() {
               className="flex items-center gap-1.5 rounded-card border border-mist/80 bg-transparent px-3 py-1.5 text-ink/75 hover:border-gold hover:text-gold dark:border-edge/80 dark:text-bone/75 dark:hover:border-gold dark:hover:text-gold transition-all"
             >
               <span>View Store</span>
-              <span className="text-[10px]">↗</span>
+              <ExternalLinkIcon />
             </a>
 
             {/* Theme Toggle Button */}
@@ -103,6 +103,16 @@ function SunIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="5" />
       <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   );
 }

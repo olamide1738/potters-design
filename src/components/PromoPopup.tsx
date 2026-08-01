@@ -110,7 +110,7 @@ export function PromoPopup() {
               <button
                 key={option}
                 onClick={dismiss}
-                className="w-full rounded-lg bg-gold px-5 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-[#fda437] hover:text-white sm:px-6 sm:py-4 sm:text-base"
+                className="w-full rounded-lg bg-gold px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#fda437] hover:text-white sm:px-6 sm:py-4 sm:text-base"
               >
                 {option}
               </button>

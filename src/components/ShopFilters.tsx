@@ -156,7 +156,7 @@ export function ShopFilters({ filters, onChange, onReset, priceBounds }: Props) 
                 className={
                   "rounded-card border px-2.5 py-1 text-xs transition-colors " +
                   (on
-                    ? "border-gold bg-gold text-ink"
+                    ? "border-gold bg-gold !text-white"
                     : "border-mist text-ink/70 hover:border-gold dark:border-edge dark:text-bone/70 dark:hover:border-gold")
                 }
               >

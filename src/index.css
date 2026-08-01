@@ -111,6 +111,9 @@
 }
 
 @layer base {
+  *, ::before, ::after {
+    border-radius: 10px !important;
+  }
   :root {
     color-scheme: light;
   }
@@ -158,7 +161,7 @@
     @apply btn bg-ink text-bone hover:bg-[#fda437] hover:text-white dark:bg-bone dark:text-ink dark:hover:bg-[#fda437] dark:hover:text-white;
   }
   .btn-accent {
-    @apply btn bg-gold text-ink hover:bg-[#fda437] hover:text-white;
+    @apply btn bg-gold text-white hover:bg-[#fda437] hover:text-white;
   }
   .btn-ghost {
     @apply btn border border-ink/20 text-ink hover:border-[#fda437] hover:bg-[#fda437] hover:text-white

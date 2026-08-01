@@ -198,7 +198,7 @@ export function Header() {
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] font-bold text-ink">
+    <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] font-bold text-white">
       {children}
     </span>
   );

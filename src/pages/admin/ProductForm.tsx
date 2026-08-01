@@ -435,7 +435,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
               <div key={url} className="relative h-24 w-20 overflow-hidden rounded-card border border-mist dark:border-edge">
                 <img src={url} alt="" className="h-full w-full object-cover" />
                 {url === image ? (
-                  <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[10px] font-semibold text-ink">Main</span>
+                  <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[10px] font-semibold !text-white">Main</span>
                 ) : (
                   <button
                     type="button"
@@ -487,7 +487,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                       setImageUrlInput("");
                     }
                   }}
-                  className="btn bg-gold text-ink hover:bg-[#fda437] hover:text-white px-4 py-2 text-xs"
+                  className="btn bg-gold !text-white hover:bg-[#fda437] hover:text-white px-4 py-2 text-xs"
                 >
                   Apply
                 </button>
@@ -512,7 +512,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                       setGalleryUrlInput("");
                     }
                   }}
-                  className="btn bg-gold text-ink hover:bg-[#fda437] hover:text-white px-4 py-2 text-xs"
+                  className="btn bg-gold !text-white hover:bg-[#fda437] hover:text-white px-4 py-2 text-xs"
                 >
                   Add
                 </button>
@@ -576,7 +576,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                             <div key={url + idx} className="relative h-20 w-16 overflow-hidden rounded-card border border-mist dark:border-edge">
                               <img src={url} alt={`${color} ${idx}`} className="h-full w-full object-cover" />
                               {idx === 0 ? (
-                                <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold text-ink">
+                                <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold !text-white">
                                   Primary
                                 </span>
                               ) : (
@@ -624,7 +624,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                           <button
                             type="button"
                             onClick={() => handleColorUrlAdd(color)}
-                            className="btn bg-gold px-2.5 py-1 text-xs font-medium text-ink hover:bg-[#fda437] hover:text-white shrink-0"
+                            className="btn bg-gold px-2.5 py-1 text-xs font-medium !text-white hover:bg-[#fda437] hover:text-white shrink-0"
                           >
                             Add
                           </button>
@@ -674,7 +674,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                             <div key={url + idx} className="relative h-20 w-16 overflow-hidden rounded-card border border-mist dark:border-edge">
                               <img src={url} alt={`${len} ${idx}`} className="h-full w-full object-cover" />
                               {idx === 0 ? (
-                                <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold text-ink">
+                                <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold !text-white">
                                   Primary
                                 </span>
                               ) : (
@@ -722,7 +722,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                           <button
                             type="button"
                             onClick={() => handleLengthUrlAdd(len)}
-                            className="btn bg-gold px-2.5 py-1 text-xs font-medium text-ink hover:bg-[#fda437] hover:text-white shrink-0"
+                            className="btn bg-gold px-2.5 py-1 text-xs font-medium !text-white hover:bg-[#fda437] hover:text-white shrink-0"
                           >
                             Add
                           </button>
@@ -777,7 +777,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                               <div key={url + idx} className="relative h-20 w-16 overflow-hidden rounded-card border border-mist dark:border-edge">
                                 <img src={url} alt={`${label} ${idx}`} className="h-full w-full object-cover" />
                                 {idx === 0 ? (
-                                  <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold text-ink">
+                                  <span className="absolute bottom-0 left-0 right-0 bg-gold py-0.5 text-center text-[9px] font-semibold !text-white">
                                     Primary
                                   </span>
                                 ) : (
@@ -825,7 +825,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
                             <button
                               type="button"
                               onClick={() => handleCombinedUrlAdd(key)}
-                              className="btn bg-gold px-2.5 py-1 text-xs font-medium text-ink hover:bg-[#fda437] hover:text-white shrink-0"
+                              className="btn bg-gold px-2.5 py-1 text-xs font-medium !text-white hover:bg-[#fda437] hover:text-white shrink-0"
                             >
                               Add
                             </button>
@@ -991,7 +991,7 @@ function PillGroup({ label, options, selected, onToggle }: { label: string; opti
               onClick={() => onToggle(opt)}
               className={`rounded-card border px-2 py-1 text-xs ${
                 active
-                  ? "border-gold bg-gold text-ink"
+                  ? "border-gold bg-gold !text-white font-semibold"
                   : "border-mist text-ink/70 hover:border-gold dark:border-edge dark:text-bone/70"
               }`}
             >

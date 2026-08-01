@@ -91,7 +91,7 @@ export function Footer() {
               placeholder="Email address"
               className="w-full rounded-l-card border border-bone/30 bg-transparent px-3 py-2 text-sm text-bone placeholder:text-bone/50 focus:border-gold focus:outline-none"
             />
-            <button className="rounded-r-card bg-gold px-4 text-sm font-semibold text-ink transition-colors hover:bg-[#fda437] hover:text-white">
+            <button className="rounded-r-card bg-gold px-4 text-sm font-semibold text-white transition-colors hover:bg-[#fda437] hover:text-white">
               Join
             </button>
           </form>

@@ -57,7 +57,7 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
           {product.featured && product.inStock && !product.onSale && (
-            <span className="rounded-card bg-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink transition-colors hover:bg-[#fda437] hover:text-white">
+            <span className="rounded-card bg-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#fda437] hover:text-white">
               Featured
             </span>
           )}
