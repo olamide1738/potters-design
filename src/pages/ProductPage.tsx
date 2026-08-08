@@ -306,32 +306,34 @@ export function ProductPage() {
 
           return (
             <div className="flex flex-col-reverse sm:flex-row gap-3.5 lg:sticky lg:top-24 lg:self-start">
-              {/* Vertical Thumbnails Column on Left */}
+              {/* Thumbnails Column (Centered on Mobile, Left-aligned on Desktop) */}
               {imgs.length > 1 && (
-                <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:max-h-[640px] shrink-0 aesthetic-scrollbar pb-1 sm:pb-0 sm:pr-1">
-                  {imgs.map((src, i) => (
-                    <button
-                      key={i}
-                      onClick={() => pickThumb(i)}
-                      className={cn(
-                        "aspect-square h-20 w-20 shrink-0 overflow-hidden rounded-card border transition-all duration-200",
-                        i === activeImg
-                          ? "border-gold ring-2 ring-gold/40 shadow-sm opacity-100"
-                          : "border-mist opacity-70 hover:border-ink/60 hover:opacity-100 dark:border-edge dark:hover:border-bone/60",
-                      )}
-                    >
-                      <img
-                        src={src}
-                        alt=""
-                        onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER; }}
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  ))}
+                <div className="w-full sm:w-auto overflow-x-auto sm:overflow-y-auto sm:max-h-[640px] shrink-0 aesthetic-scrollbar pb-1 sm:pb-0 sm:pr-1">
+                  <div className="flex sm:flex-col gap-3 justify-center sm:justify-start min-w-max sm:min-w-0">
+                    {imgs.map((src, i) => (
+                      <button
+                        key={i}
+                        onClick={() => pickThumb(i)}
+                        className={cn(
+                          "aspect-square h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-card border transition-all duration-200",
+                          i === activeImg
+                            ? "border-gold ring-2 ring-gold/40 shadow-sm opacity-100 scale-105"
+                            : "border-mist opacity-70 hover:border-ink/60 hover:opacity-100 dark:border-edge dark:hover:border-bone/60",
+                        )}
+                      >
+                        <img
+                          src={src}
+                          alt=""
+                          onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER; }}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Big Display Image Container (10% Larger: max-h-[640px]) */}
+              {/* Big Display Image Container */}
               <div className="group relative flex-1 aspect-[3/3.9] max-h-[640px] overflow-hidden rounded-card bg-surface dark:bg-carbon shadow-sm">
                 <FadingProductImage src={current} alt={product.name} />
 
@@ -341,18 +343,18 @@ export function ProductPage() {
                     <button
                       onClick={prevImg}
                       aria-label="Previous image"
-                      className="absolute left-3 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-bone/80 text-ink shadow-md backdrop-blur transition-all duration-200 hover:bg-gold hover:text-ink opacity-80 group-hover:opacity-100 dark:bg-carbon/80 dark:text-bone dark:hover:bg-gold dark:hover:text-ink"
+                      className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-10 grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-bone/90 text-ink shadow-md backdrop-blur transition-all duration-200 hover:bg-gold hover:text-white dark:bg-carbon/90 dark:text-bone dark:hover:bg-gold dark:hover:text-white"
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="15 18 9 12 15 6" />
                       </svg>
                     </button>
                     <button
                       onClick={nextImg}
                       aria-label="Next image"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-bone/80 text-ink shadow-md backdrop-blur transition-all duration-200 hover:bg-gold hover:text-ink opacity-80 group-hover:opacity-100 dark:bg-carbon/80 dark:text-bone dark:hover:bg-gold dark:hover:text-ink"
+                      className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-10 grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-bone/90 text-ink shadow-md backdrop-blur transition-all duration-200 hover:bg-gold hover:text-white dark:bg-carbon/90 dark:text-bone dark:hover:bg-gold dark:hover:text-white"
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="9 18 15 12 9 6" />
                       </svg>
                     </button>
