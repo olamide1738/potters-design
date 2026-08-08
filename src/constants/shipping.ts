@@ -295,14 +295,14 @@ export const COUNTRY_MAP: Record<string, ShippingCountry> = Object.fromEntries(
 // ── Rate table ────────────────────────────────────────────────────────────────
 // Columns: [weight_kg, z1, z2, z3, z4, z5, z6, z7, z8]
 const RATE_ROWS: [number, number, number, number, number, number, number, number, number][] = [
-  [0.5, 75000, 75000, 90000, 110000, 98000, 110000, 120000, 125000],
-  [1,   75000, 75000, 90000, 110000, 98000, 110000, 120000, 125000],
-  [1.5, 75000, 75000, 90000, 110000, 98000, 110000, 120000, 125000],
-  [2,   75000, 75000, 90000, 110000, 98000, 110000, 120000, 125000],
+  [0.5, 75000, 75000, 90000, 110000, 100000, 110000, 120000, 125000],
+  [1,   75000, 75000, 90000, 110000, 100000, 110000, 120000, 125000],
+  [1.5, 75000, 75000, 90000, 110000, 100000, 110000, 120000, 125000],
+  [2,   75000, 75000, 90000, 110000, 100000, 110000, 120000, 125000],
   [3,   93000, 94000, 112000, 144000, 122000, 136000, 148000, 156000],
-  [4,   111000, 113000, 134000, 178000, 146000, 162000, 176000, 187000],
-  [5,   129000, 132000, 156000, 212000, 169000, 188000, 204000, 218000],
-  [6,   147000, 151000, 178000, 246000, 194000, 214000, 232000, 249000],
+  [4,   111000, 113000, 193000, 178000, 146000, 162000, 176000, 187000],
+  [5,   129000, 132000, 156000, 172100, 169000, 188000, 204000, 218000],
+  [6,   146100, 159100, 273600, 246000, 201800, 344900, 245000, 297000],
   [7,   165000, 171000, 200000, 280000, 218000, 240000, 260000, 280000],
   [8,   183000, 189000, 222000, 314000, 242000, 266000, 288000, 311000],
   [9,   201000, 208000, 244000, 348000, 266000, 292000, 316000, 342000],
@@ -410,100 +410,73 @@ const DOMESTIC_EXPRESS_RATES: [number, number, number, number][] = [
   [20,   79000, 87000, 99200],
 ];
 
-// ── Standard service (5–7 working days) · State-based · Zones A–E ────────────
-// Row format: [weightKg, zoneA, zoneB, zoneC, zoneD, zoneE]
-const DOMESTIC_STANDARD_RATES: [number, number, number, number, number, number][] = [
-  [1,  6700,  8200,  9000,  9400,  9800],
-  [2,  6700,  8200,  9000,  9400,  9800],
-  [3,  6700,  8200,  9000,  9400,  9800],
-  [4,  6700,  8200,  9000,  9400,  9800],
-  [5,  8200,  9700,  10500, 10900, 11300],
-  [6,  9600,  11200, 12000, 12400, 12800],
-  [7,  11100, 12700, 13500, 13800, 14200],
-  [8,  12600, 14200, 14900, 15300, 15700],
-  [9,  14100, 15600, 16400, 16800, 17200],
-  [10, 15600, 17100, 17900, 18300, 18700],
-  [11, 17000, 18600, 19400, 19800, 20200],
-  [12, 18500, 20100, 20900, 21200, 21600],
-  [13, 20000, 21600, 22300, 22700, 23100],
-  [14, 21500, 23000, 23800, 24200, 24600],
-  [15, 23000, 24500, 25300, 25700, 26100],
-  [16, 24400, 26000, 26800, 27200, 27600],
-  [17, 25900, 27500, 28300, 28700, 29000],
-  [18, 27400, 29000, 29700, 30100, 30500],
-  [19, 28900, 30400, 31200, 31600, 32000],
-  [20, 30400, 31900, 32700, 33100, 33500],
-  [21, 31800, 33400, 34200, 34600, 35000],
-  [22, 33300, 34900, 35700, 36100, 36400],
-  [23, 34800, 36400, 37100, 37500, 37900],
-  [24, 36300, 37800, 38600, 39000, 39400],
-  [25, 37800, 39300, 40100, 40500, 40900],
-  [26, 39300, 40800, 41600, 42000, 42400],
-  [27, 40700, 42300, 43100, 43500, 43900],
-  [28, 42200, 43800, 44600, 44900, 45300],
-  [29, 43700, 45300, 46000, 46400, 46800],
-  [30, 45200, 46700, 47500, 47900, 48300],
-  [31, 46700, 48200, 49000, 49400, 49800],
-  [32, 48100, 49700, 50500, 50900, 51300],
-  [33, 49600, 51200, 52000, 52300, 52700],
-  [34, 51100, 52700, 53400, 53800, 54200],
-  [35, 52600, 54100, 54900, 55300, 55700],
-  [36, 54100, 55600, 56400, 56800, 57200],
-  [37, 55500, 57100, 57900, 58300, 58700],
-  [38, 57000, 58600, 59400, 59800, 60100],
-  [39, 58500, 60100, 60800, 61200, 61600],
-  [40, 60000, 61500, 62300, 62700, 63100],
-];
 
-/** Nigerian states with their shipping zone for the 5–7 day standard service. */
+
+/** Nigerian states with their shipping zones for standard (A–E) and express (1–3) services. */
 export interface NigerianState {
   name: string;
   zone: "A" | "B" | "C" | "D" | "E" | "Lagos";
+  expressZone?: 1 | 2 | 3;
 }
+
+export const INTERSTATE_STANDARD_RATES: Record<"A" | "B" | "C" | "D" | "E", number> = {
+  A: 11000,
+  B: 12000,
+  C: 12000,
+  D: 13000,
+  E: 13500,
+};
+
+export const INTERSTATE_EXPRESS_RATES: Record<1 | 2 | 3, number> = {
+  1: 15000,
+  2: 20000,
+  3: 22000,
+};
 
 export const NIGERIAN_STATES: NigerianState[] = [
   { name: "Lagos", zone: "Lagos" },
-  // Zone A (Southwest)
-  { name: "Ekiti", zone: "A" },
-  { name: "Ogun", zone: "A" },
-  { name: "Ondo", zone: "A" },
-  { name: "Osun", zone: "A" },
-  { name: "Oyo", zone: "A" },
-  // Zone B (South + Middle Belt)
-  { name: "Abia", zone: "B" },
-  { name: "Anambra", zone: "B" },
-  { name: "Bayelsa", zone: "B" },
-  { name: "Delta", zone: "B" },
-  { name: "Ebonyi", zone: "B" },
-  { name: "Edo", zone: "B" },
-  { name: "Enugu", zone: "B" },
-  { name: "Imo", zone: "B" },
-  { name: "Kwara", zone: "B" },
-  { name: "Rivers", zone: "B" },
-  // Zone C (FCT)
-  { name: "FCT (Abuja)", zone: "C" },
-  // Zone D (North)
-  { name: "Adamawa", zone: "D" },
-  { name: "Bauchi", zone: "D" },
-  { name: "Benue", zone: "D" },
-  { name: "Borno", zone: "D" },
-  { name: "Gombe", zone: "D" },
-  { name: "Jigawa", zone: "D" },
-  { name: "Kaduna", zone: "D" },
-  { name: "Kano", zone: "D" },
-  { name: "Katsina", zone: "D" },
-  { name: "Kebbi", zone: "D" },
-  { name: "Kogi", zone: "D" },
-  { name: "Nasarawa", zone: "D" },
-  { name: "Niger", zone: "D" },
-  { name: "Plateau", zone: "D" },
-  { name: "Sokoto", zone: "D" },
-  { name: "Taraba", zone: "D" },
-  { name: "Yobe", zone: "D" },
-  { name: "Zamfara", zone: "D" },
-  // Zone E (Southeast coast)
-  { name: "Akwa Ibom", zone: "E" },
-  { name: "Cross River", zone: "E" },
+  // Zone A (Southwest) → Standard Zone A (₦11,000) · Express Zone 1 (₦15,000)
+  { name: "Ekiti", zone: "A", expressZone: 1 },
+  { name: "Ogun", zone: "A", expressZone: 1 },
+  { name: "Ondo", zone: "A", expressZone: 1 },
+  { name: "Osun", zone: "A", expressZone: 1 },
+  { name: "Oyo", zone: "A", expressZone: 1 },
+  // Zone B (South + Middle Belt) → Standard Zone B (₦12,000) · Express Zone 2 (₦20,000)
+  { name: "Abia", zone: "B", expressZone: 2 },
+  { name: "Anambra", zone: "B", expressZone: 2 },
+  { name: "Bayelsa", zone: "B", expressZone: 2 },
+  { name: "Delta", zone: "B", expressZone: 2 },
+  { name: "Ebonyi", zone: "B", expressZone: 2 },
+  { name: "Edo", zone: "B", expressZone: 2 },
+  { name: "Enugu", zone: "B", expressZone: 2 },
+  { name: "Imo", zone: "B", expressZone: 2 },
+  { name: "Kwara", zone: "B", expressZone: 2 },
+  { name: "Rivers", zone: "B", expressZone: 2 },
+  // Zone C (FCT) → Standard Zone C (₦12,000) · Express Zone 2 (₦20,000)
+  { name: "FCT (Abuja)", zone: "C", expressZone: 2 },
+  // Zone D (North) → Standard Zone D (₦13,000)
+  // Express Zone 2 (₦20,000) for regional hubs, Express Zone 3 (₦22,000) for far North
+  { name: "Benue", zone: "D", expressZone: 2 },
+  { name: "Kaduna", zone: "D", expressZone: 2 },
+  { name: "Kano", zone: "D", expressZone: 2 },
+  { name: "Kogi", zone: "D", expressZone: 2 },
+  { name: "Nasarawa", zone: "D", expressZone: 2 },
+  { name: "Niger", zone: "D", expressZone: 2 },
+  { name: "Plateau", zone: "D", expressZone: 2 },
+  { name: "Adamawa", zone: "D", expressZone: 3 },
+  { name: "Bauchi", zone: "D", expressZone: 3 },
+  { name: "Borno", zone: "D", expressZone: 3 },
+  { name: "Gombe", zone: "D", expressZone: 3 },
+  { name: "Jigawa", zone: "D", expressZone: 3 },
+  { name: "Katsina", zone: "D", expressZone: 3 },
+  { name: "Kebbi", zone: "D", expressZone: 3 },
+  { name: "Sokoto", zone: "D", expressZone: 3 },
+  { name: "Taraba", zone: "D", expressZone: 3 },
+  { name: "Yobe", zone: "D", expressZone: 3 },
+  { name: "Zamfara", zone: "D", expressZone: 3 },
+  // Zone E (Southeast coast) → Standard Zone E (₦13,500) · Express Zone 3 (₦22,000)
+  { name: "Akwa Ibom", zone: "E", expressZone: 3 },
+  { name: "Cross River", zone: "E", expressZone: 3 },
 ];
 
 const STATE_ZONE_MAP: Record<string, NigerianState["zone"]> = Object.fromEntries(
@@ -515,40 +488,79 @@ function ceilDomesticExpressStep(kg: number): number {
   return steps.find((s) => s >= kg) ?? 20;
 }
 
-function ceilDomesticStandardStep(kg: number): number {
-  const steps = DOMESTIC_STANDARD_RATES.map((r) => r[0]);
-  return steps.find((s) => s >= kg) ?? 40;
+export interface DomesticDeliveryOption {
+  fee: number;
+  service: string;
+  deliveryDays: string;
+  zoneLabel: string;
 }
+
+export interface DomesticDeliveryRates {
+  standard: DomesticDeliveryOption;
+  express: DomesticDeliveryOption;
+}
+
+export function getInterstateRates(stateName: string): DomesticDeliveryRates | null {
+  const state = NIGERIAN_STATES.find((s) => s.name === stateName);
+  if (!state || state.zone === "Lagos") return null;
+
+  const stdZone = state.zone as "A" | "B" | "C" | "D" | "E";
+  const expZone = (state.expressZone ?? 2) as 1 | 2 | 3;
+
+  return {
+    standard: {
+      fee: INTERSTATE_STANDARD_FEES[stdZone] ?? INTERSTATE_STANDARD_RATES[stdZone],
+      service: "Standard Delivery (5–7 Working Days)",
+      deliveryDays: "5–7 Working Days",
+      zoneLabel: `Zone ${stdZone}`,
+    },
+    express: {
+      fee: INTERSTATE_EXPRESS_RATES[expZone],
+      service: "Express Delivery (1–3 Working Days)",
+      deliveryDays: "1–3 Working Days",
+      zoneLabel: `Zone ${expZone}`,
+    },
+  };
+}
+
+// Re-export constant alias
+export const INTERSTATE_STANDARD_FEES = INTERSTATE_STANDARD_RATES;
 
 export interface DomesticRate {
   fee: number;
-  service: "Express · 1–3 days" | "Standard · 5–7 days";
+  service: string;
   remoteFee: number;
 }
 
 /**
  * Returns the domestic (Nigeria) shipping rate.
- * Lagos uses the Express service Zone 1 (origin city).
- * All other states use the Standard service by state zone.
- * Returns null only if state is unrecognised.
+ * Lagos uses local city zones.
+ * Interstate uses standard (5–7 days) or express (1–3 days) rates.
  */
-export function getDomesticRate(stateName: string, weightKg: number): DomesticRate | null {
+export function getDomesticRate(
+  stateName: string,
+  weightKg: number,
+  speed: "standard" | "express" = "standard",
+): DomesticRate | null {
+  const interstate = getInterstateRates(stateName);
+  if (interstate) {
+    const opt = interstate[speed];
+    return {
+      fee: opt.fee,
+      service: opt.service,
+      remoteFee: 0,
+    };
+  }
+
   const zone = STATE_ZONE_MAP[stateName];
   if (!zone) return null;
-
-  const REMOTE_FEE = 2700;
 
   if (zone === "Lagos") {
     const step = ceilDomesticExpressStep(Math.min(weightKg, 20));
     const row = DOMESTIC_EXPRESS_RATES.find((r) => r[0] === step);
     if (!row) return null;
-    return { fee: row[1], service: "Express · 1–3 days", remoteFee: REMOTE_FEE };
+    return { fee: row[1], service: "Express · 1–3 days", remoteFee: 0 };
   }
 
-  const zoneIndex = { A: 1, B: 2, C: 3, D: 4, E: 5 } as const;
-  const idx = zoneIndex[zone as keyof typeof zoneIndex];
-  const step = ceilDomesticStandardStep(Math.min(weightKg, 40));
-  const row = DOMESTIC_STANDARD_RATES.find((r) => r[0] === step);
-  if (!row) return null;
-  return { fee: row[idx], service: "Standard · 5–7 days", remoteFee: REMOTE_FEE };
+  return null;
 }

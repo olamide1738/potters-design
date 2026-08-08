@@ -18,24 +18,19 @@ export const PRODUCTS: Product[] = [
     category: "Dresses",
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Red", "Yellow"],
-    sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-    lengths: ["Short", "Long"],
+    sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    fitType: "fitted",
     inStock: true,
     onSale: false,
     featured: true,
     hasVariants: true,
-    hasLengthImages: true,
-    lengthImages: {
-      Short: ["/images/products/awero-2.jpg"],
-      Long: ["/images/products/awero-1.jpg", "/images/products/awero-3.jpg"],
-    },
     description:
       "The Awero Dress is a masterpiece of tradition and modern design, beautifully crafted from authentic Yoruba Aso Oke. This elegant piece features bold, structured shoulders and a gracefully flowing asymmetric hem that moves with effortless poise.\n\nDesigned to celebrate strength and femininity, the Awero Dress captures the essence of cultural pride reimagined for today's confident woman. Its rich texture and warm hue make it perfect for special occasions, cultural events, or any moment that calls for timeless elegance.",
     fabric: "Cotton fabric",
     careInstructions: "Dry clean recommended. Handle with care.",
     weightKg: "1.2 – 1.7 kg (incl. packaging)",
     shippingWeightKg: 1.7,
-    priceNote: "Sizes XS–L (PD 4–14): ₦130,000 · Sizes L–2XL (PD 16–22): ₦150,000",
+    priceNote: "Sizes 4–14: ₦130,000 · Sizes 16–22: ₦150,000",
   },
   {
     id: 35728,
@@ -53,7 +48,8 @@ export const PRODUCTS: Product[] = [
     category: "Skirt",
     tags: ["women", "fashion", "aso-oke"],
     colors: ["Pink", "Lime"],
-    sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    fitType: "fitted",
     inStock: true,
     onSale: false,
     featured: true,
@@ -85,7 +81,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "akwete"],
     colors: ["Blue"],
     sizes: ["Free Size"],
-    lengths: ["Short", "Regular", "Tall"],
+    fitType: "loose",
     inStock: true,
     onSale: false,
     featured: false,
@@ -114,7 +110,8 @@ export const PRODUCTS: Product[] = [
     category: "Dresses",
     tags: ["aso-oke", "asooke", "women"],
     colors: ["Green", "Yellow"],
-    sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    fitType: "fitted",
     inStock: true,
     onSale: true,
     featured: true,
@@ -126,7 +123,7 @@ export const PRODUCTS: Product[] = [
     weightKg: "1.7 – 2.2 kg (incl. packaging)",
     shippingWeightKg: 2.2,
     dimensions: "Length: 132 cm",
-    priceNote: "Sizes XS–L (PD 4–14): ₦180,000 · Sizes L–2XL (PD 16–22): ₦200,000",
+    priceNote: "Sizes 4–14: ₦180,000 · Sizes 16–22: ₦200,000",
   },
   {
     id: 35617,
@@ -142,7 +139,8 @@ export const PRODUCTS: Product[] = [
     category: "Dresses",
     tags: ["women", "fashion", "aso-oke"],
     colors: ["Gray", "Silver"],
-    sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    fitType: "fitted",
     inStock: true,
     onSale: false,
     featured: false,
@@ -154,7 +152,7 @@ export const PRODUCTS: Product[] = [
     weightKg: "1.7 – 2.0 kg (incl. packaging)",
     shippingWeightKg: 2.0,
     dimensions: "Length: 52 cm",
-    priceNote: "Sizes XS–L (PD 4–14): ₦130,000 · Sizes L–2XL (PD 16–22): ₦150,000",
+    priceNote: "Sizes 4–14: ₦130,000 · Sizes 16–22: ₦150,000",
   },
   {
     id: 35593,
@@ -173,6 +171,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Blue", "Gray"],
     sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    fitType: "loose",
     inStock: true,
     onSale: false,
     featured: true,
@@ -201,6 +200,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Green"],
     sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    fitType: "loose",
     inStock: true,
     onSale: false,
     featured: false,
@@ -223,7 +223,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "akwete"],
     colors: ["Yellow", "Gold", "Earth"],
     sizes: ["Free Size"],
-    lengths: ["Short", "Regular", "Tall"],
+    fitType: "loose",
     inStock: true,
     onSale: false,
     featured: false,
@@ -235,16 +235,6 @@ export const PRODUCTS: Product[] = [
         "/images/products/awero-2.jpg",
       ],
       Gold: [
-        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
-      ],
-    },
-    hasLengthImages: true,
-    lengthImages: {
-      Short: [
-        "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
-        "/images/products/awero-3.jpg",
-      ],
-      Regular: [
         "https://pottersdesign.com/wp-content/uploads/2024/06/Eyinju-700x700.jpg",
       ],
     },
@@ -272,12 +262,13 @@ export const PRODUCTS: Product[] = [
     id: 35548,
     slug: "funke",
     name: "Funke",
-    price: [150000, 200000],
+    price: [150000, 170000],
     image: "https://pottersdesign.com/wp-content/uploads/2024/06/Funke-700x700.jpg",
     category: "Dresses",
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Ivory", "Copper"],
-    sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    fitType: "fitted",
     inStock: true,
     onSale: false,
     featured: true,
@@ -289,7 +280,7 @@ export const PRODUCTS: Product[] = [
     weightKg: "1.7 – 2.0 kg (incl. packaging)",
     shippingWeightKg: 2.0,
     dimensions: "Length: 71 cm",
-    priceNote: "Sizes XS–M (PD 4–12): ₦150,000 · Sizes L–2XL (PD 14–22): ₦200,000",
+    priceNote: "Sizes 4–16: ₦150,000 · Sizes 18–22: ₦170,000",
   },
 ];
 
@@ -312,15 +303,16 @@ export const PRODUCT_TAGS = [
 ];
 
 export const PRODUCT_COLORS = [
-  "Amber", "Amethyst", "Aqua", "Aquamarine", "Army Green", "Beige", "Black", "Blush", "Bottle Green", 
-  "Bronze", "Brown", "Burgundy", "Burnt Orange", "Camel", "Champagne", "Charcoal", "Chartreuse", 
-  "Claret", "Cobalt", "Copper", "Coral", "Cream", "Crimson", "Cyan", "Denim", 
-  "Dusty Pink", "Earth", "Emerald", "Fuchsia", "Gold", "Gray", "Green", "Indigo", "Ivory", "Jade", 
-  "Khaki", "Lavender", "Lemon", "Lilac", "Lime", "Magenta", "Mahogany", "Maroon", "Mauve", 
-  "Midnight Blue", "Mint", "Mustard", "Navy", "Nude", "Ochre", "Olive", "Orange", "Peach", 
-  "Periwinkle", "Pink", "Plum", "Purple", "Red", "Rose", "Rose Gold", "Rust", "Ruby", "Sage", 
-  "Salmon", "Sand", "Sapphire", "Scarlet", "Silver", "Sky Blue", "Slate", "Tan", "Taupe", 
-  "Teal", "Terracotta", "Turquoise", "Vermilion", "Violet", "White", "Wine", "Yellow"
+  "Black",
+  "White",
+  "Red",
+  "Blue",
+  "Green",
+  "Yellow",
+  "Gold",
+  "Pink",
+  "Brown",
+  "Beige",
 ];
 
 export const PRODUCT_LENGTHS = [
@@ -333,9 +325,19 @@ export const PRODUCT_LENGTHS = [
   "Ankle Length",
 ];
 
-// XS–2XL correspond to PD sizes 4–22 (see Size Guide)
-export const PRODUCT_SIZES = [
+/** PD numeric sizes for fitted outfits (4–22) */
+export const PRODUCT_FITTED_SIZES = [
+  "4", "6", "8", "10", "12", "14", "16", "18", "20", "22",
+];
+
+/** Alpha sizes for loose fitted outfits, pants, jackets, shirts, 2-pieces */
+export const PRODUCT_ALPHA_SIZES = [
   "XS", "S", "M", "L", "XL", "2XL", "Free Size",
+];
+
+export const PRODUCT_SIZES = [
+  ...PRODUCT_FITTED_SIZES,
+  ...PRODUCT_ALPHA_SIZES,
 ];
 
 export function getProductBySlug(slug: string): Product | undefined {

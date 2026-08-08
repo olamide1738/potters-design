@@ -11,6 +11,7 @@ import {
 } from "@/lib/products-db";
 import { subscribeToOrders, updateOrderStatus, updateOrderProductionStatus } from "@/lib/orders-db";
 import { ProductForm } from "./ProductForm";
+import { ShippingRatesManager } from "./ShippingRatesManager";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -18,6 +19,7 @@ const TABS = [
   { id: "orders", label: "Orders" },
   { id: "pipeline", label: "Pipeline" },
   { id: "logistics", label: "Logistics" },
+  { id: "shipping", label: "Shipping Rates" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -1110,6 +1112,13 @@ export function AdminDashboard() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* ── TAB 6: SHIPPING RATES ───────────────────────────────────────── */}
+      {activeTab === "shipping" && (
+        <div key="shipping" className="mt-8 animate-slide-up">
+          <ShippingRatesManager />
         </div>
       )}
 

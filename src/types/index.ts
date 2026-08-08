@@ -20,6 +20,8 @@ export interface Product {
   tags: string[];
   colors: string[];
   sizes: string[];
+  /** Outfit fit type: "fitted" (PD 4–22) or "loose" (XS–2XL) */
+  fitType?: "fitted" | "loose";
   inStock: boolean;
   onSale: boolean;
   featured: boolean;

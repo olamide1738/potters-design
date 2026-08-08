@@ -2,11 +2,12 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { Product, ProductCategory } from "@/types";
 import {
   CATEGORIES,
-  PRODUCT_COLORS,
+  PRODUCT_ALPHA_SIZES,
+  PRODUCT_FITTED_SIZES,
   PRODUCT_LENGTHS,
-  PRODUCT_SIZES,
   PRODUCT_TAGS,
 } from "@/data/products";
+import { SearchableColorSelector } from "@/components/SearchableColorSelector";
 
 import {
   createOrUpdateProduct,
@@ -35,7 +36,6 @@ const toggle = <T,>(list: T[], value: T): T[] =>
 export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
   const isRange = Array.isArray(initial?.price);
 
-  const LENGTH_CATEGORIES: string[] = ["Bubu", "Dresses", "Pants", "2-pieces"];
   const initialCat = initial?.category ?? "Dresses";
 
   const [name, setName] = useState(initial?.name ?? "");
@@ -56,20 +56,14 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
   const [gallery, setGallery] = useState<string[]>(initial?.gallery ?? []);
   const [colors, setColors] = useState<string[]>(initial?.colors ?? []);
   const [sizes, setSizes] = useState<string[]>(initial?.sizes ?? []);
-  const [lengths, setLengths] = useState<string[]>(
-    initial?.lengths && initial.lengths.length > 0
-      ? initial.lengths
-      : LENGTH_CATEGORIES.includes(initialCat)
-      ? ["Short", "Regular", "Tall"]
-      : [],
-  );
+  const [lengths, setLengths] = useState<string[]>(initial?.lengths ?? []);
 
   const handleCategoryChange = (newCat: ProductCategory) => {
     setCategory(newCat);
-    if (LENGTH_CATEGORIES.includes(newCat) && lengths.length === 0) {
-      setLengths(["Short", "Regular", "Tall"]);
-    }
   };
+  const [fitType, setFitType] = useState<"fitted" | "loose">(
+    initial?.fitType ?? (initial?.sizes.some((s) => !isNaN(Number(s))) ? "fitted" : "loose")
+  );
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
   const [inStock, setInStock] = useState(initial?.inStock ?? true);
   const [onSale, setOnSale] = useState(initial?.onSale ?? false);
@@ -329,6 +323,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
       tags,
       colors,
       sizes,
+      fitType,
       lengths,
       inStock,
       onSale,
@@ -403,27 +398,90 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
               ))}
             </select>
           </Field>
+
+          <Field label="Fit Type (Sizing)">
+            <select
+              value={fitType}
+              onChange={(e) => {
+                const newFit = e.target.value as "fitted" | "loose";
+                setFitType(newFit);
+                if (newFit === "fitted") {
+                  setSizes(PRODUCT_FITTED_SIZES);
+                } else {
+                  setSizes(PRODUCT_ALPHA_SIZES.filter((s) => s !== "Free Size"));
+                }
+              }}
+              className="input-field font-semibold text-gold"
+            >
+              <option value="fitted">Fitted Outfit (PD Sizes 4 to 22)</option>
+              <option value="loose">Loose Fitted Outfit (Sizes XS to 2XL)</option>
+            </select>
+          </Field>
         </div>
 
         {/* Pricing */}
-        <div className="mt-4">
-          <CheckRow label="Variable price (range)" checked={variablePrice} onChange={setVariablePrice} />
+        <div className="mt-4 rounded-card border border-mist/60 bg-surface/20 p-4 dark:border-edge/60 dark:bg-edge/10">
+          <CheckRow label="Enable Size-Based Pricing" checked={variablePrice} onChange={setVariablePrice} />
           {variablePrice ? (
-            <div className="mt-2 grid grid-cols-2 gap-4">
-              <Field label="Price min (₦)">
-                <input type="number" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="input-field" />
-              </Field>
-              <Field label="Price max (₦)">
-                <input type="number" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="input-field" />
-              </Field>
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label={fitType === "fitted" ? "Sizes 4–16 Price (₦)" : "Sizes XS–L Price (₦)"}>
+                  <input
+                    type="number"
+                    value={priceMin}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPriceMin(val);
+                      if (val && priceMax) {
+                        const pMin = Number(val).toLocaleString();
+                        const pMax = Number(priceMax).toLocaleString();
+                        const note = fitType === "fitted"
+                          ? `Sizes 4–16: ₦${pMin} · Sizes 18–22: ₦${pMax}`
+                          : `Sizes XS–L: ₦${pMin} · Sizes XL–2XL: ₦${pMax}`;
+                        setPriceNote(note);
+                      }
+                    }}
+                    placeholder="150000"
+                    className="input-field font-mono font-semibold"
+                  />
+                </Field>
+                <Field label={fitType === "fitted" ? "Sizes 18–22 Price (₦)" : "Sizes XL–2XL Price (₦)"}>
+                  <input
+                    type="number"
+                    value={priceMax}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPriceMax(val);
+                      if (priceMin && val) {
+                        const pMin = Number(priceMin).toLocaleString();
+                        const pMax = Number(val).toLocaleString();
+                        const note = fitType === "fitted"
+                          ? `Sizes 4–16: ₦${pMin} · Sizes 18–22: ₦${pMax}`
+                          : `Sizes XS–L: ₦${pMin} · Sizes XL–2XL: ₦${pMax}`;
+                        setPriceNote(note);
+                      }
+                    }}
+                    placeholder="170000"
+                    className="input-field font-mono font-semibold"
+                  />
+                </Field>
+              </div>
+              <p className="text-xs text-gold font-medium">
+                💡 Size-based pricing: {fitType === "fitted" ? "Sizes 4–16" : "Sizes XS–L"} will be ₦{priceMin ? Number(priceMin).toLocaleString() : "150,000"} and {fitType === "fitted" ? "Sizes 18–22" : "Sizes XL–2XL"} will be ₦{priceMax ? Number(priceMax).toLocaleString() : "170,000"}.
+              </p>
             </div>
           ) : (
             <Field label="Price (₦)" className="mt-2">
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="input-field" />
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="input-field font-mono font-semibold" />
             </Field>
           )}
-          <Field label="Price note (optional)" className="mt-2">
-            <input value={priceNote} onChange={(e) => setPriceNote(e.target.value)} placeholder="e.g. Sizes XS–L: ₦130,000 · L–2XL: ₦150,000" className="input-field" />
+          <Field label="Price note (auto-generated or custom)" className="mt-3">
+            <input
+              value={priceNote}
+              onChange={(e) => setPriceNote(e.target.value)}
+              placeholder={fitType === "fitted" ? "e.g. Sizes 4–16: ₦150,000 · Sizes 18–22: ₦170,000" : "e.g. Sizes XS–L: ₦150,000 · Sizes XL–2XL: ₦170,000"}
+              className="input-field"
+            />
           </Field>
         </div>
 
@@ -525,7 +583,12 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SearchableColorSelector selected={colors} onToggle={(v) => setColors((c) => toggle(c, v))} />
           <PillGroup label="Lengths" options={PRODUCT_LENGTHS} selected={lengths} onToggle={(v) => setLengths((l) => toggle(l, v))} />
-          <PillGroup label="Sizes" options={PRODUCT_SIZES} selected={sizes} onToggle={(v) => setSizes((s) => toggle(s, v))} />
+          <PillGroup
+            label={`Sizes (${fitType === "fitted" ? "PD 4–22" : "XS–2XL"})`}
+            options={fitType === "fitted" ? PRODUCT_FITTED_SIZES : PRODUCT_ALPHA_SIZES}
+            selected={sizes}
+            onToggle={(v) => setSizes((s) => toggle(s, v))}
+          />
           <PillGroup label="Tags" options={PRODUCT_TAGS} selected={tags} onToggle={(v) => setTags((t) => toggle(t, v))} />
         </div>
 
@@ -739,9 +802,9 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
         {/* Combined Variation Images Section */}
         {hasCombinedVariantImages && (
           <div className="mt-4 rounded-card border border-gold/40 bg-gold/5 p-4 dark:border-gold/30 dark:bg-gold/10">
-            <span className="block text-sm font-semibold text-gold">Combined Variation Images (Color + Size / Length)</span>
+            <span className="block text-sm font-semibold text-gold">Combined Variation Images (Color + Length)</span>
             <p className="mt-1 text-xs text-ink/70 dark:text-bone/70">
-              Link specific images to combined variations (e.g. Green + Small, Green + Short). When a customer selects both criteria on the product page, these specific combined images will reflect automatically.
+              Link specific images to combined variations (e.g. Yellow + Short, Yellow + Long). When a customer selects both criteria on the product page, these specific combined images will reflect automatically.
             </p>
 
             {colors.length === 0 ? (
@@ -751,7 +814,7 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
             ) : (
               <div className="mt-4 space-y-4">
                 {colors.map((c) => {
-                  const subOptions = sizes.length > 0 ? sizes : (lengths.length > 0 ? lengths : ["Default"]);
+                  const subOptions = lengths.length > 0 ? lengths : (sizes.length > 0 ? sizes : ["Default"]);
                   return subOptions.map((s) => {
                     const key = `${c}_${s}`;
                     const label = `${c} + ${s}`;
@@ -1000,131 +1063,6 @@ function PillGroup({ label, options, selected, onToggle }: { label: string; opti
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function SearchableColorSelector({
-  selected,
-  onToggle,
-}: {
-  selected: string[];
-  onToggle: (color: string) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-
-  const filtered = PRODUCT_COLORS.filter((c) =>
-    c.toLowerCase().includes(query.trim().toLowerCase()),
-  );
-
-  const isExactMatch = PRODUCT_COLORS.some(
-    (c) => c.toLowerCase() === query.trim().toLowerCase(),
-  );
-
-  const canAddCustom = query.trim() && !isExactMatch;
-
-  return (
-    <div className="relative">
-      <span className="mb-1 block text-sm font-semibold">Colors</span>
-
-      {/* Selected Color Pills */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {selected.map((c) => (
-          <span
-            key={c}
-            className="inline-flex items-center gap-1.5 rounded-card border border-gold bg-gold/15 px-2 py-0.5 text-xs font-semibold text-ink dark:text-bone"
-          >
-            <span className="h-2 w-2 rounded-full bg-gold border border-mist inline-block"></span>
-            {c}
-            <button
-              type="button"
-              onClick={() => onToggle(c)}
-              className="text-ink/60 hover:text-sale dark:text-bone/60 dark:hover:text-sale ml-0.5 text-xs font-bold"
-            >
-              ×
-            </button>
-          </span>
-        ))}
-      </div>
-
-      {/* Search Input */}
-      <div className="relative">
-        <input
-          type="text"
-          value={query}
-          onFocus={() => setIsOpen(true)}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setIsOpen(true);
-          }}
-          placeholder="Search color (e.g. Red, Emerald)..."
-          className="input-field py-1 text-xs w-full"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setIsOpen(false);
-            }}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-ink/40 hover:text-ink dark:text-bone/40 dark:hover:text-bone"
-          >
-            ×
-          </button>
-        )}
-      </div>
-
-      {/* Dropdown Options */}
-      {isOpen && (
-        <div className="absolute left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto rounded-card border border-mist bg-bone shadow-xl dark:border-edge dark:bg-ink p-1">
-          {canAddCustom && (
-            <button
-              type="button"
-              onClick={() => {
-                const custom = query.trim();
-                if (!selected.includes(custom)) {
-                  onToggle(custom);
-                }
-                setQuery("");
-                setIsOpen(false);
-              }}
-              className="w-full text-left px-2.5 py-1.5 text-xs font-semibold text-gold hover:bg-gold/10 rounded flex items-center gap-1.5"
-            >
-              <span>+ Add custom color "{query.trim()}"</span>
-            </button>
-          )}
-
-          {filtered.length > 0 ? (
-            filtered.map((color) => {
-              const isSelected = selected.includes(color);
-              return (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => {
-                    onToggle(color);
-                    setQuery("");
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 text-xs rounded flex items-center justify-between transition-colors ${
-                    isSelected
-                      ? "bg-gold/20 font-semibold text-ink dark:text-bone"
-                      : "hover:bg-mist/50 dark:hover:bg-edge/50 text-ink/80 dark:text-bone/80"
-                  }`}
-                >
-                  <span>{color}</span>
-                  {isSelected && <span className="text-[10px] text-gold font-bold">Selected</span>}
-                </button>
-              );
-            })
-          ) : !canAddCustom ? (
-            <div className="px-2.5 py-2 text-xs text-ink/50 dark:text-bone/50 italic">
-              No matching colors found.
-            </div>
-          ) : null}
-        </div>
-      )}
     </div>
   );
 }

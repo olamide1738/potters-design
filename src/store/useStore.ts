@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartLine, Product } from "@/types";
-import { priceFloor } from "@/lib/format";
+import { getItemUnitPrice } from "@/lib/format";
 
 interface StoreState {
   cart: CartLine[];
@@ -48,16 +48,16 @@ export const useStore = create<StoreState>()(
           const commonImgs = colorImgs && lengthImgs ? colorImgs.filter((img) => lengthImgs.includes(img)) : null;
 
           const combKey3 = color && size && length ? `${color}_${size}_${length}` : null;
-          const combKey2Size = color && size ? `${color}_${size}` : null;
           const combKey2Length = color && length ? `${color}_${length}` : null;
+          const combKey2Size = color && size ? `${color}_${size}` : null;
 
           const combImgs = product.hasCombinedVariantImages && product.combinedVariantImages
             ? (combKey3 && product.combinedVariantImages[combKey3]?.length
                 ? product.combinedVariantImages[combKey3]
-                : combKey2Size && product.combinedVariantImages[combKey2Size]?.length
-                ? product.combinedVariantImages[combKey2Size]
                 : combKey2Length && product.combinedVariantImages[combKey2Length]?.length
                 ? product.combinedVariantImages[combKey2Length]
+                : combKey2Size && product.combinedVariantImages[combKey2Size]?.length
+                ? product.combinedVariantImages[combKey2Size]
                 : null)
             : null;
 
@@ -76,7 +76,7 @@ export const useStore = create<StoreState>()(
             productId: product.id,
             slug: product.slug,
             name: product.name,
-            unitPrice: priceFloor(product.price),
+            unitPrice: getItemUnitPrice(product.price, size),
             image: lineImage,
             size,
             color,

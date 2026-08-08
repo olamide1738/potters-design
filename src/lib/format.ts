@@ -27,6 +27,19 @@ export function priceCeil(price: Product["price"]): number {
   return Array.isArray(price) ? price[1] : price;
 }
 
+/** Calculate exact unit price based on selected size for variable priced products. */
+export function getItemUnitPrice(price: Product["price"], size?: string): number {
+  if (!Array.isArray(price)) return price;
+  if (!size) return price[0];
+  const numSize = parseInt(size, 10);
+  if (!isNaN(numSize)) {
+    // Numeric PD sizes: 18+ use the higher price range (e.g. ₦170,000 for 18–22)
+    return numSize >= 18 ? price[1] : price[0];
+  }
+  const isPlusAlpha = ["XL", "2XL", "3XL"].includes(size.toUpperCase());
+  return isPlusAlpha ? price[1] : price[0];
+}
+
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
 }

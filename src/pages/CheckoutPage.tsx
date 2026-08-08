@@ -20,6 +20,7 @@ declare global {
 import { useStore } from "@/store/useStore";
 import { useToastStore } from "@/store/useToastStore";
 import { useProducts } from "@/store/useProductStore";
+import { useShippingStore, getLiveInterstateRates, getLiveInternationalRate } from "@/store/useShippingStore";
 import { formatPrice } from "@/lib/format";
 
 import {
@@ -190,7 +191,21 @@ export function CheckoutPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderNote, setOrderNote] = useState("");
   const [locating, setLocating] = useState(false);
+  const [deliverySpeed, setDeliverySpeed] = useState<"standard" | "express">("standard");
   const isPickup = fulfillment === "pickup";
+
+  const shippingSettings = useShippingStore((s) => s.settings);
+  const subscribeShipping = useShippingStore((s) => s.subscribe);
+
+  useEffect(() => {
+    return subscribeShipping();
+  }, [subscribeShipping]);
+
+  const lagosZoneList = useMemo(() => {
+    return shippingSettings.lagosZones && shippingSettings.lagosZones.length > 0
+      ? shippingSettings.lagosZones
+      : LAGOS_ZONES;
+  }, [shippingSettings.lagosZones]);
 
   // Auto-detect Lagos zone based on city/address input
   const detectedLagosZone = useMemo(() => {
@@ -199,11 +214,11 @@ export function CheckoutPage() {
     const searchTerms = [form.city, form.address].filter(Boolean).join(" ").toLowerCase();
     if (!searchTerms) return null;
     
-    const foundZone = LAGOS_ZONES.find((z) =>
+    const foundZone = lagosZoneList.find((z) =>
       z.areas.some((area) => searchTerms.includes(area.toLowerCase()))
     );
     return foundZone?.id || null;
-  }, [form.city, form.address, form.state]);
+  }, [form.city, form.address, form.state, lagosZoneList]);
 
   // Geolocation function with fallback geocoding services
   const handleUseCurrentLocation = async () => {
@@ -352,23 +367,37 @@ export function CheckoutPage() {
   // Shipping calculation — domestic vs international
   const isDomestic = form.countryCode === "NG";
 
+  const interstateRates = useMemo(() => {
+    if (!isDomestic || isPickup || form.state === "Lagos") return null;
+    return getLiveInterstateRates(form.state, shippingSettings);
+  }, [isDomestic, isPickup, form.state, shippingSettings]);
+
   const domesticRate = useMemo(() => {
     if (!isDomestic || isPickup) return null;
     if (form.state === "Lagos") {
       if (!detectedLagosZone) return null;
-      const zone = LAGOS_ZONES.find((z) => z.id === detectedLagosZone);
+      const zone = lagosZoneList.find((z) => z.id === detectedLagosZone);
       return {
         fee: zone?.fee ?? 0,
         service: `${detectedLagosZone} Delivery`,
         remoteFee: 0,
       };
     }
-    return getDomesticRate(form.state, weightKg);
-  }, [isDomestic, isPickup, form.state, detectedLagosZone, weightKg]);
+    const liveInterstate = getLiveInterstateRates(form.state, shippingSettings);
+    if (liveInterstate) {
+      const opt = liveInterstate[deliverySpeed];
+      return {
+        fee: opt.fee,
+        service: opt.service,
+        remoteFee: 0,
+      };
+    }
+    return getDomesticRate(form.state, weightKg, deliverySpeed);
+  }, [isDomestic, isPickup, form.state, detectedLagosZone, lagosZoneList, shippingSettings, deliverySpeed, weightKg]);
 
   const intlFee = useMemo(
-    () => (!isDomestic && !isPickup ? getShippingRate(form.countryCode, weightKg) : null),
-    [isDomestic, isPickup, form.countryCode, weightKg],
+    () => (!isDomestic && !isPickup ? (getLiveInternationalRate(form.countryCode, weightKg, shippingSettings) ?? getShippingRate(form.countryCode, weightKg)) : null),
+    [isDomestic, isPickup, form.countryCode, weightKg, shippingSettings],
   );
 
   const zoneName = useMemo(
@@ -660,7 +689,7 @@ export function CheckoutPage() {
                 <div>
                   <p className="text-sm font-semibold">Pick up in store</p>
                   <p className="mt-0.5 text-xs text-ink/50 dark:text-bone/50">
-                    Free · Ready in 24 hrs
+                    Free
                   </p>
                 </div>
               </label>
@@ -690,6 +719,80 @@ export function CheckoutPage() {
                   <p className="mt-1 text-xs text-ink/50 dark:text-bone/50">
                     Monday – Saturday · 9:00 AM – 6:00 PM
                   </p>
+                </div>
+              </div>
+            )}
+            {fulfillment === "delivery" && isDomestic && (
+              <div className="mt-5 space-y-3 rounded-card border border-mist/80 bg-surface/30 p-4 dark:border-edge/80 dark:bg-edge/10">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-ink/70 dark:text-bone/70">
+                    Interstate Delivery Service
+                  </span>
+                  {interstateRates && (
+                    <span className="text-[11px] font-medium text-ink/50 dark:text-bone/50">
+                      Rates for {form.state}
+                    </span>
+                  )}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-card border p-3.5 transition-colors ${
+                      deliverySpeed === "standard"
+                        ? "border-gold bg-gold/5 dark:border-gold dark:bg-gold/10"
+                        : "border-mist hover:border-ink/30 dark:border-edge dark:hover:border-bone/30"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="deliverySpeed"
+                      value="standard"
+                      checked={deliverySpeed === "standard"}
+                      onChange={() => setDeliverySpeed("standard")}
+                      className="mt-0.5 h-4 w-4 accent-gold"
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-ink dark:text-bone">
+                        Standard Delivery
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-ink/60 dark:text-bone/60">
+                        5–7 Working Days {interstateRates ? `(${interstateRates.standard.zoneLabel})` : "(Zones A–E)"}
+                      </p>
+                      <p className="mt-1 font-mono text-xs font-bold text-gold">
+                        {interstateRates ? convert(interstateRates.standard.fee) : "From ₦11,000"}
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-card border p-3.5 transition-colors ${
+                      deliverySpeed === "express"
+                        ? "border-gold bg-gold/5 dark:border-gold dark:bg-gold/10"
+                        : "border-mist hover:border-ink/30 dark:border-edge dark:hover:border-bone/30"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="deliverySpeed"
+                      value="express"
+                      checked={deliverySpeed === "express"}
+                      onChange={() => setDeliverySpeed("express")}
+                      className="mt-0.5 h-4 w-4 accent-gold"
+                    />
+                    <div>
+                      <div className="flex items-center gap-1.5 font-semibold text-xs text-ink dark:text-bone">
+                        <span>Express Delivery</span>
+                        <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[9px] font-bold text-gold uppercase tracking-wider">
+                          1–3 Days
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-ink/60 dark:text-bone/60">
+                        1–3 Working Days {interstateRates ? `(${interstateRates.express.zoneLabel})` : "(Zones 1–3)"}
+                      </p>
+                      <p className="mt-1 font-mono text-xs font-bold text-gold">
+                        {interstateRates ? convert(interstateRates.express.fee) : "From ₦15,000"}
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
             )}

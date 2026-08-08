@@ -1,5 +1,5 @@
 import type { ProductCategory, ShopFilterState } from "@/types";
-import { CATEGORIES, PRODUCT_COLORS, PRODUCT_SIZES, PRODUCT_TAGS } from "@/data/products";
+import { CATEGORIES, PRODUCT_SIZES, PRODUCT_TAGS } from "@/data/products";
 import { useProducts } from "@/store/useProductStore";
 import { formatPrice } from "@/lib/format";
 
@@ -99,27 +99,43 @@ export function ShopFilters({ filters, onChange, onReset, priceBounds }: Props) 
       </FilterBlock>
 
       {/* Colors */}
-      <FilterBlock title="Product color">
-        <div className="flex flex-wrap gap-1.5">
-          {PRODUCT_COLORS.map((c) => {
-            const on = filters.colors.includes(c);
-            return (
-              <button
-                key={c}
-                onClick={() => onChange({ colors: toggle(filters.colors, c) })}
-                className={
-                  "rounded-card border px-2.5 py-1 text-xs transition-colors " +
-                  (on
-                    ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
-                    : "border-mist text-ink hover:border-ink dark:border-edge dark:text-bone dark:hover:border-bone")
-                }
-              >
-                {c}
-              </button>
-            );
-          })}
-        </div>
-      </FilterBlock>
+      {(() => {
+        const availableColors = Array.from(
+          new Set(
+            products
+              .flatMap((p) => p.colors ?? [])
+              .map((c) => c.trim())
+              .filter(Boolean)
+          )
+        ).sort();
+
+        if (availableColors.length === 0) return null;
+
+        return (
+          <FilterBlock title="Product color">
+            <div className="flex flex-wrap gap-1.5">
+              {availableColors.map((c) => {
+                const on = filters.colors.includes(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => onChange({ colors: toggle(filters.colors, c) })}
+                    className={
+                      "rounded-card border px-2.5 py-1 text-xs transition-colors " +
+                      (on
+                        ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
+                        : "border-mist text-ink hover:border-ink dark:border-edge dark:text-bone dark:hover:border-bone")
+                    }
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+          </FilterBlock>
+        );
+      })()}
 
       {/* Sizes */}
       <FilterBlock title="Product size">

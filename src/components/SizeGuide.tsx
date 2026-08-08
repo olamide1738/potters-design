@@ -27,14 +27,14 @@ const PANTS_TWO_PIECE = [
 
 const LENGTH_DRESSES = [
   { length: "Short", garment: "58 inches", height: "5'3\" and under" },
-  { length: "Regular", garment: "61 inches", height: "5'4\" - 5'7\"" },
-  { length: "Tall", garment: "65 inches", height: "5'8\" and over" },
+  { length: "Regular", garment: "62 inches", height: "5'4\"–5'8\"" },
+  { length: "Tall", garment: "65 inches", height: "5'9\" and over" },
 ];
 
 const LENGTH_TROUSERS = [
-  { length: "Short", garment: "38 inches", height: "5'3\" and under" },
-  { length: "Regular", garment: "41 inches", height: "5'4\" - 5'7\"" },
-  { length: "Tall", garment: "45 inches", height: "5'8\" and over" },
+  { length: "Short", garment: "40 inches", height: "5'3\" and under" },
+  { length: "Regular", garment: "43 inches", height: "5'4\"–5'8\"" },
+  { length: "Tall", garment: "46 inches", height: "5'9\" and over" },
 ];
 
 export function SizeGuide({ isOpen, onClose }: Props) {

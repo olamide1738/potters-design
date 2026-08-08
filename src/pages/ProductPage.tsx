@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useProducts, useProductBySlug } from "@/store/useProductStore";
 import { useStore } from "@/store/useStore";
 import { useToastStore } from "@/store/useToastStore";
-import { cn, formatProductPrice } from "@/lib/format";
+import { cn, formatPrice, formatProductPrice, getItemUnitPrice } from "@/lib/format";
 import {
   computeDeliveryTimeline,
   formatDeliveryDate,
@@ -45,6 +45,55 @@ function FadingProductImage({ src, alt }: { src: string; alt: string }) {
       className="h-full w-full object-cover"
     />
   );
+}
+
+const COLOR_MAP: Record<string, string> = {
+  black: "#18181B",
+  white: "#FFFFFF",
+  red: "#DC2626",
+  blue: "#2563EB",
+  green: "#16A34A",
+  yellow: "#EAB308",
+  gold: "#D4AF37",
+  pink: "#EC4899",
+  brown: "#78350F",
+  beige: "#F5F5DC",
+  lime: "#84CC16",
+  navy: "#1E3A8A",
+  purple: "#9333EA",
+  orange: "#EA580C",
+  teal: "#0D9488",
+  grey: "#6B7280",
+  gray: "#6B7280",
+  burgundy: "#800020",
+  silver: "#C0C0C0",
+  olive: "#808000",
+  mustard: "#E1AD01",
+  coral: "#FF7F50",
+  ivory: "#FFF8DC",
+  nude: "#D2B48C",
+  tan: "#D2B48C",
+  lilac: "#C8A2C8",
+  lavender: "#E6E6FA",
+  mint: "#98FF98",
+  peach: "#FFDAB9",
+  wine: "#722F37",
+};
+
+function getColorStyle(colorName: string): React.CSSProperties {
+  const normalized = colorName.trim().toLowerCase();
+  if (normalized === "gold") {
+    return {
+      background: "linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%)",
+    };
+  }
+  if (normalized === "multicolor" || normalized === "multi") {
+    return {
+      background: "linear-gradient(135deg, #EF4444, #3B82F6, #10B981, #F59E0B)",
+    };
+  }
+  const hex = COLOR_MAP[normalized] || (colorName.startsWith("#") ? colorName : colorName);
+  return { backgroundColor: hex };
 }
 
 export function ProductPage() {
@@ -94,19 +143,19 @@ export function ProductPage() {
       ? colorGallery.filter((img) => lengthGallery.includes(img))
       : null;
 
-  // Combined variation images check (e.g. Color + Size, Color + Length, Color + Size + Length)
+  // Combined variation images check (e.g. Color + Length, Color + Size, Color + Size + Length)
   const combinedKey3 = color && size && length ? `${color}_${size}_${length}` : null;
-  const combinedKey2Size = color && size ? `${color}_${size}` : null;
   const combinedKey2Length = color && length ? `${color}_${length}` : null;
+  const combinedKey2Size = color && size ? `${color}_${size}` : null;
 
   const combinedGallery =
     product?.hasCombinedVariantImages && product?.combinedVariantImages
       ? (combinedKey3 && product.combinedVariantImages[combinedKey3]?.length
           ? product.combinedVariantImages[combinedKey3]
-          : combinedKey2Size && product.combinedVariantImages[combinedKey2Size]?.length
-          ? product.combinedVariantImages[combinedKey2Size]
           : combinedKey2Length && product.combinedVariantImages[combinedKey2Length]?.length
           ? product.combinedVariantImages[combinedKey2Length]
+          : combinedKey2Size && product.combinedVariantImages[combinedKey2Size]?.length
+          ? product.combinedVariantImages[combinedKey2Size]
           : null)
       : null;
 
@@ -160,10 +209,23 @@ export function ProductPage() {
       ? product.lengths
       : product.hasLengthImages && product.lengthImages && Object.keys(product.lengthImages).length > 0
       ? Object.keys(product.lengthImages)
-      : ["bubu", "dresses", "pants", "2-pieces"].includes(product.category.toLowerCase())
-      ? ["Short", "Regular", "Tall"]
       : [];
   const needsLength = availableLengths.length > 0;
+
+  useEffect(() => {
+    if (product) {
+      if (product.colors.length === 1 && !color) {
+        setColor(product.colors[0]);
+      }
+      if (product.sizes.length === 1 && !size && product.sizes[0] !== "Free Size") {
+        setSize(product.sizes[0]);
+      }
+      if (availableLengths.length === 1 && !length) {
+        setLength(availableLengths[0]);
+      }
+    }
+  }, [product, color, size, length, availableLengths]);
+
   const canAdd =
     product.inStock && (!needsSize || size) && (!needsColor || color) && (!needsLength || length);
 
@@ -317,7 +379,7 @@ export function ProductPage() {
 
           <h1 className="mt-2 text-4xl font-semibold">{product.name}</h1>
           <p className="mt-3 text-2xl font-semibold text-gold">
-            {formatProductPrice(product.price)}
+            {size ? formatPrice(getItemUnitPrice(product.price, size)) : formatProductPrice(product.price)}
           </p>
 
           {product.priceNote && (
@@ -337,7 +399,7 @@ export function ProductPage() {
           {/* Colour */}
           {needsColor && (
             <div className="mt-8">
-              <p className="mb-2 text-sm font-semibold">
+              <p className="mb-2.5 text-sm font-semibold">
                 Colour
                 {color && (
                   <span className="ml-1 font-normal text-ink/50 dark:text-bone/50">
@@ -345,36 +407,41 @@ export function ProductPage() {
                   </span>
                 )}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {product.colors.map((c) => {
                   const colorOos = product.variantStock?.colors?.[c] === false;
-                  const firstColorImg = product.hasColorImages ? product.colorImages?.[c]?.[0] : null;
                   return (
-                  <button
-                    key={c}
-                    onClick={() => {
-                      setColor(c);
-                      setLastSelectedVariation("color");
-                      setActiveImg(0);
-                    }}
-                    disabled={colorOos}
-                    className={cn(
-                      "flex items-center gap-2 rounded-card border px-3.5 py-2 text-sm transition-colors",
-                      color === c
-                        ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
-                        : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
-                      colorOos && "cursor-not-allowed opacity-40 line-through",
-                    )}
-                  >
-                    {firstColorImg && (
-                      <img
-                        src={firstColorImg}
-                        alt={c}
-                        className="h-4 w-4 rounded-full object-cover border border-mist/60"
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setColor(c);
+                        setLastSelectedVariation("color");
+                        setActiveImg(0);
+                      }}
+                      disabled={colorOos}
+                      title={c}
+                      aria-label={`Select color: ${c}`}
+                      className={cn(
+                        "group relative h-9 w-9 rounded-card border-2 p-0.5 transition-all duration-200 focus:outline-none",
+                        color === c
+                          ? "border-gold ring-2 ring-gold/40 scale-105 shadow-sm"
+                          : "border-mist hover:border-ink/60 dark:border-edge dark:hover:border-bone/60",
+                        colorOos && "cursor-not-allowed opacity-40",
+                      )}
+                    >
+                      <div
+                        role="img"
+                        aria-label={c}
+                        style={getColorStyle(c)}
+                        className="h-full w-full rounded-[6px] border border-black/10 shadow-inner"
                       />
-                    )}
-                    <span>{c}</span>
-                  </button>
+                      {colorOos && (
+                        <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <span className="h-0.5 w-full bg-sale/80 -rotate-45" />
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
@@ -411,8 +478,8 @@ export function ProductPage() {
                     className={cn(
                       "min-w-10 rounded-card border px-3 py-2 text-sm transition-colors",
                       size === s
-                        ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
-                        : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
+                        ? "border-gold bg-gold !text-white font-semibold shadow-sm"
+                        : "border-mist hover:border-gold/50 dark:border-edge dark:hover:border-gold/50",
                       sizeOos && "cursor-not-allowed opacity-40 line-through",
                     )}
                   >
@@ -453,8 +520,8 @@ export function ProductPage() {
                       className={cn(
                         "flex items-center gap-2 rounded-card border px-3.5 py-2 text-sm transition-colors",
                         length === l
-                          ? "border-ink bg-ink text-bone dark:border-bone dark:bg-bone dark:text-ink"
-                          : "border-mist hover:border-ink dark:border-edge dark:hover:border-bone",
+                          ? "border-gold bg-gold !text-white font-semibold shadow-sm"
+                          : "border-mist hover:border-gold/50 dark:border-edge dark:hover:border-gold/50",
                         lengthOos && "cursor-not-allowed opacity-40 line-through",
                       )}
                     >
@@ -515,11 +582,8 @@ export function ProductPage() {
             <div className="flex items-start gap-3">
               <CheckCircleIcon />
               <div className="flex-1">
-                <p className="text-sm">
+                <p className="text-sm font-medium">
                   Pickup available
-                  <span className="ml-2 text-ink/50 dark:text-bone/50">
-                    — Usually ready in 24 hours
-                  </span>
                 </p>
                 <button
                   onClick={() => setStoreInfoOpen((v) => !v)}
