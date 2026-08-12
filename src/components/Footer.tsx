@@ -69,6 +69,7 @@ export function Footer() {
             { label: "FAQs", to: "/faq" },
             { label: "Wishlist", to: "/wishlist" },
             { label: "Cart", to: "/cart" },
+            { label: "Admin Portal", to: "/admin" },
           ]}
         />
 
