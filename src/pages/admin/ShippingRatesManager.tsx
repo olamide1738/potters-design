@@ -527,8 +527,7 @@ export function ShippingRatesManager() {
                   <tr className="border-b border-mist text-ink/50 dark:border-edge dark:text-bone/50">
                     <th className="py-2">Country</th>
                     <th className="py-2">Code</th>
-                    <th className="py-2">Light (≤2.5kg)</th>
-                    <th className="py-2">Heavy (≥3kg)</th>
+                    <th className="py-2">Zone</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -538,10 +537,7 @@ export function ShippingRatesManager() {
                         <td className="py-2 font-medium">{c.name}</td>
                         <td className="py-2 font-mono text-ink/50">{c.code}</td>
                         <td className="py-2 font-semibold text-gold">
-                          {c.zoneLight === 0 ? "Domestic" : `Zone ${c.zoneLight}`}
-                        </td>
-                        <td className="py-2 font-semibold text-gold">
-                          {c.zoneHeavy === 0 ? "Domestic" : `Zone ${c.zoneHeavy}`}
+                          {c.zone === 0 ? "Domestic" : `Zone ${c.zone}`}
                         </td>
                       </tr>
                     )

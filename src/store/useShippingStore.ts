@@ -87,10 +87,10 @@ export function getLiveInternationalRate(
   settings: ShippingSettings = useShippingStore.getState().settings
 ): number | null {
   const country = COUNTRY_MAP[countryCode];
-  if (!country || country.zoneLight === 0) return null; // domestic
+  if (!country || country.zone === 0) return null; // domestic
 
   const roundedWeight = Math.ceil(weightKg);
-  const zone = roundedWeight <= 2 ? country.zoneLight : country.zoneHeavy;
+  const zone = country.zone;
   const ratesMatrix = settings.internationalRates ?? DEFAULT_SHIPPING_SETTINGS.internationalRates;
 
   const steps = ratesMatrix.map((r) => r[0]);
