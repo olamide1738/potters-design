@@ -32,10 +32,8 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   { code: "ZA", name: "South Africa", currency: "ZAR", zoneLight: 3, zoneHeavy: 5 },
   { code: "KE", name: "Kenya", currency: "KES", zoneLight: 3, zoneHeavy: 5 },
 
-  // ── ZONE 4 light → ZONE 2 heavy ──────────────────────────
-  { code: "US", name: "United States", currency: "USD", zoneLight: 4, zoneHeavy: 2 },
-
   // ── ZONE 4 light → ZONE 3 heavy ──────────────────────────
+  { code: "US", name: "United States", currency: "USD", zoneLight: 4, zoneHeavy: 3 },
   { code: "CA", name: "Canada", currency: "CAD", zoneLight: 4, zoneHeavy: 3 },
   { code: "MX", name: "Mexico", currency: "MXN", zoneLight: 4, zoneHeavy: 3 },
 
