@@ -369,8 +369,8 @@ export function CheckoutPage() {
 
   const interstateRates = useMemo(() => {
     if (!isDomestic || isPickup || form.state === "Lagos") return null;
-    return getLiveInterstateRates(form.state, shippingSettings);
-  }, [isDomestic, isPickup, form.state, shippingSettings]);
+    return getLiveInterstateRates(form.state, weightKg, shippingSettings);
+  }, [isDomestic, isPickup, form.state, weightKg, shippingSettings]);
 
   const domesticRate = useMemo(() => {
     if (!isDomestic || isPickup) return null;
@@ -383,7 +383,7 @@ export function CheckoutPage() {
         remoteFee: 0,
       };
     }
-    const liveInterstate = getLiveInterstateRates(form.state, shippingSettings);
+    const liveInterstate = getLiveInterstateRates(form.state, weightKg, shippingSettings);
     if (liveInterstate) {
       const opt = liveInterstate[deliverySpeed];
       return {
@@ -758,7 +758,7 @@ export function CheckoutPage() {
                         5–7 Working Days {interstateRates ? `(${interstateRates.standard.zoneLabel})` : "(Zones A–E)"}
                       </p>
                       <p className="mt-1 font-mono text-xs font-bold text-gold">
-                        {interstateRates ? convert(interstateRates.standard.fee) : "From ₦11,000"}
+                        {interstateRates ? convert(interstateRates.standard.fee) : "From ₦12,000"}
                       </p>
                     </div>
                   </label>
@@ -789,7 +789,7 @@ export function CheckoutPage() {
                         1–3 Working Days {interstateRates ? `(${interstateRates.express.zoneLabel})` : "(Zones 1–3)"}
                       </p>
                       <p className="mt-1 font-mono text-xs font-bold text-gold">
-                        {interstateRates ? convert(interstateRates.express.fee) : "From ₦15,000"}
+                        {interstateRates ? convert(interstateRates.express.fee) : "From ₦20,000"}
                       </p>
                     </div>
                   </label>

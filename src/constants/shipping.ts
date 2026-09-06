@@ -392,29 +392,55 @@ export interface NigerianState {
   expressZone?: 1 | 2 | 3;
 }
 
+/**
+ * Interstate weight-based delivery rate card (0–20kg)
+ * Row format: [weightKg, standardRate (5–7 days), expressRate (1–3 days)]
+ */
+export const INTERSTATE_RATE_ROWS: [number, number, number][] = [
+  [2,  12000, 20000],
+  [3,  13000, 25000],
+  [4,  14000, 30000],
+  [5,  15000, 35000],
+  [6,  15000, 40000],
+  [7,  17000, 45000],
+  [8,  18000, 50000],
+  [9,  20000, 55000],
+  [10, 22000, 60000],
+  [11, 24000, 65000],
+  [12, 26000, 68000],
+  [13, 27000, 70000],
+  [14, 28000, 75000],
+  [15, 29000, 80000],
+  [16, 30000, 85000],
+  [17, 32000, 90000],
+  [18, 33000, 95000],
+  [19, 34000, 98000],
+  [20, 35000, 100000],
+];
+
 export const INTERSTATE_STANDARD_RATES: Record<"A" | "B" | "C" | "D" | "E", number> = {
-  A: 11000,
+  A: 12000,
   B: 12000,
   C: 12000,
-  D: 13000,
-  E: 13500,
+  D: 12000,
+  E: 12000,
 };
 
 export const INTERSTATE_EXPRESS_RATES: Record<1 | 2 | 3, number> = {
-  1: 15000,
+  1: 20000,
   2: 20000,
-  3: 22000,
+  3: 20000,
 };
 
 export const NIGERIAN_STATES: NigerianState[] = [
   { name: "Lagos", zone: "Lagos" },
-  // Zone A (Southwest) → Standard Zone A (₦11,000) · Express Zone 1 (₦15,000)
+  // Zone A (West) → Standard Zone A (₦12,000) · Express Zone 1 (₦20,000)
   { name: "Ekiti", zone: "A", expressZone: 1 },
   { name: "Ogun", zone: "A", expressZone: 1 },
   { name: "Ondo", zone: "A", expressZone: 1 },
   { name: "Osun", zone: "A", expressZone: 1 },
   { name: "Oyo", zone: "A", expressZone: 1 },
-  // Zone B (South + Middle Belt) → Standard Zone B (₦12,000) · Express Zone 2 (₦20,000)
+  // Zone B (East) → Standard Zone B (₦12,000) · Express Zone 2 (₦20,000)
   { name: "Abia", zone: "B", expressZone: 2 },
   { name: "Anambra", zone: "B", expressZone: 2 },
   { name: "Bayelsa", zone: "B", expressZone: 2 },
@@ -425,10 +451,9 @@ export const NIGERIAN_STATES: NigerianState[] = [
   { name: "Imo", zone: "B", expressZone: 2 },
   { name: "Kwara", zone: "B", expressZone: 2 },
   { name: "Rivers", zone: "B", expressZone: 2 },
-  // Zone C (FCT) → Standard Zone C (₦12,000) · Express Zone 2 (₦20,000)
+  // Zone C (Abuja) → Standard Zone C (₦12,000) · Express Zone 2 (₦20,000)
   { name: "FCT (Abuja)", zone: "C", expressZone: 2 },
-  // Zone D (North) → Standard Zone D (₦13,000)
-  // Express Zone 2 (₦20,000) for regional hubs, Express Zone 3 (₦22,000) for far North
+  // Zone D (North) → Standard Zone D (₦12,000) · Express Zone 2 / Zone 3
   { name: "Benue", zone: "D", expressZone: 2 },
   { name: "Kaduna", zone: "D", expressZone: 2 },
   { name: "Kano", zone: "D", expressZone: 2 },
@@ -447,7 +472,7 @@ export const NIGERIAN_STATES: NigerianState[] = [
   { name: "Taraba", zone: "D", expressZone: 3 },
   { name: "Yobe", zone: "D", expressZone: 3 },
   { name: "Zamfara", zone: "D", expressZone: 3 },
-  // Zone E (Southeast coast) → Standard Zone E (₦13,500) · Express Zone 3 (₦22,000)
+  // Zone E (Akwa Ibom & Cross River) → Standard Zone E · Express Zone 3
   { name: "Akwa Ibom", zone: "E", expressZone: 3 },
   { name: "Cross River", zone: "E", expressZone: 3 },
 ];
@@ -473,22 +498,25 @@ export interface DomesticDeliveryRates {
   express: DomesticDeliveryOption;
 }
 
-export function getInterstateRates(stateName: string): DomesticDeliveryRates | null {
+export function getInterstateRates(stateName: string, weightKg: number = 2): DomesticDeliveryRates | null {
   const state = NIGERIAN_STATES.find((s) => s.name === stateName);
   if (!state || state.zone === "Lagos") return null;
 
   const stdZone = state.zone as "A" | "B" | "C" | "D" | "E";
   const expZone = (state.expressZone ?? 2) as 1 | 2 | 3;
 
+  const roundedWeight = Math.max(2, Math.min(20, Math.ceil(weightKg)));
+  const rateRow = INTERSTATE_RATE_ROWS.find((r) => r[0] >= roundedWeight) ?? INTERSTATE_RATE_ROWS[INTERSTATE_RATE_ROWS.length - 1];
+
   return {
     standard: {
-      fee: INTERSTATE_STANDARD_FEES[stdZone] ?? INTERSTATE_STANDARD_RATES[stdZone],
+      fee: rateRow[1],
       service: "Standard Delivery (5–7 Working Days)",
       deliveryDays: "5–7 Working Days",
       zoneLabel: `Zone ${stdZone}`,
     },
     express: {
-      fee: INTERSTATE_EXPRESS_RATES[expZone],
+      fee: rateRow[2],
       service: "Express Delivery (1–3 Working Days)",
       deliveryDays: "1–3 Working Days",
       zoneLabel: `Zone ${expZone}`,
@@ -515,7 +543,7 @@ export function getDomesticRate(
   weightKg: number,
   speed: "standard" | "express" = "standard",
 ): DomesticRate | null {
-  const interstate = getInterstateRates(stateName);
+  const interstate = getInterstateRates(stateName, weightKg);
   if (interstate) {
     const opt = interstate[speed];
     return {

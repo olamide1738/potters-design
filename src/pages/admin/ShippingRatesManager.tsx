@@ -3,7 +3,7 @@ import { useShippingStore } from "@/store/useShippingStore";
 import { useToastStore } from "@/store/useToastStore";
 import { DEFAULT_SHIPPING_SETTINGS } from "@/lib/shipping-db";
 import type { ShippingSettings, LagosDeliveryZoneSetting } from "@/types/shipping";
-import { NIGERIAN_STATES, SHIPPING_COUNTRIES } from "@/constants/shipping";
+import { INTERSTATE_RATE_ROWS, NIGERIAN_STATES, SHIPPING_COUNTRIES } from "@/constants/shipping";
 import { formatPrice } from "@/lib/format";
 
 type SubTab = "interstate" | "international" | "routing";
@@ -89,6 +89,14 @@ export function ShippingRatesManager() {
     setForm({ ...form, internationalRates: newRates });
   };
 
+  const updateInterstateRate = (index: number, col: 1 | 2, val: number) => {
+    const current = (form.interstateRates ?? DEFAULT_SHIPPING_SETTINGS.interstateRates ?? INTERSTATE_RATE_ROWS).map(
+      (r) => [...r] as [number, number, number]
+    );
+    current[index][col] = val;
+    setForm({ ...form, interstateRates: current });
+  };
+
   const handleAddLagosZone = () => {
     const newZone: LagosDeliveryZoneSetting = {
       id: `New Zone ${form.lagosZones.length + 1}`,
@@ -169,87 +177,118 @@ export function ShippingRatesManager() {
       {/* ── TAB 1: INTERSTATE & LAGOS RATES ────────────────────────────────── */}
       {activeSubTab === "interstate" && (
         <div className="space-y-8">
-          {/* Interstate Standard Delivery (5–7 Days) */}
+          {/* Interstate Weight-Based Delivery Rates Card (0–20kg) */}
           <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
-            <div className="flex items-center justify-between border-b border-mist pb-3 dark:border-edge">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-mist pb-3 dark:border-edge">
               <div>
-                <h3 className="font-display text-base font-semibold">Standard Interstate Delivery (5–7 Working Days)</h3>
+                <h3 className="font-display text-base font-semibold">Interstate Delivery Rate Card</h3>
                 <p className="text-xs text-ink/50 dark:text-bone/50">
-                  Fixed standard delivery rates by state zone A through E.
+                  Weight-based delivery rates (0–20kg) for all Nigerian states outside Lagos.
                 </p>
               </div>
-              <span className="rounded bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold uppercase tracking-wider">
-                Zones A–E
+              <span className="self-start rounded bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold uppercase tracking-wider">
+                0–20kg Rate Card
               </span>
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {(["A", "B", "C", "D", "E"] as const).map((z) => (
-                <div key={z} className="rounded-card border border-mist bg-surface/40 p-3 dark:border-edge dark:bg-edge/10">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-ink/70 dark:text-bone/70">
-                    Zone {z} Rate (₦)
-                  </span>
-                  <input
-                    type="number"
-                    value={form.interstateStandard[z] ?? 12000}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        interstateStandard: {
-                          ...form.interstateStandard,
-                          [z]: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="input-field mt-1.5 font-mono text-sm font-bold text-gold"
-                  />
-                  <p className="mt-1 text-[11px] text-ink/50 dark:text-bone/50">
-                    Formatted: {formatPrice(form.interstateStandard[z] ?? 12000)}
-                  </p>
-                </div>
-              ))}
+            <div className="mt-4 max-h-[500px] overflow-y-auto overflow-x-auto pr-1">
+              <table className="w-full text-left text-xs">
+                <thead className="sticky top-0 bg-bone dark:bg-carbon">
+                  <tr className="border-b border-mist text-ink/60 dark:border-edge dark:text-bone/60">
+                    <th className="py-2.5 font-semibold">Weight</th>
+                    <th className="py-2.5 font-semibold">Standard (5–7 Working Days)</th>
+                    <th className="py-2.5 font-semibold">Express (1–3 Working Days)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-mist/30 dark:divide-edge/30">
+                  {(form.interstateRates ?? DEFAULT_SHIPPING_SETTINGS.interstateRates ?? INTERSTATE_RATE_ROWS).map(
+                    (row, idx) => (
+                      <tr key={row[0]} className="hover:bg-surface/30 dark:hover:bg-edge/10">
+                        <td className="py-2.5 font-bold text-ink dark:text-bone">
+                          {row[0] === 2 ? "0–2kg" : `${row[0]}kg`}
+                        </td>
+                        <td className="py-1.5">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={row[1]}
+                              onChange={(e) => updateInterstateRate(idx, 1, Number(e.target.value))}
+                              className="input-field !w-32 !py-1 font-mono text-xs font-bold text-gold"
+                            />
+                            <span className="text-[11px] text-ink/50 dark:text-bone/50">
+                              {formatPrice(row[1])}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-1.5">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={row[2]}
+                              onChange={(e) => updateInterstateRate(idx, 2, Number(e.target.value))}
+                              className="input-field !w-32 !py-1 font-mono text-xs font-bold text-gold"
+                            />
+                            <span className="text-[11px] text-ink/50 dark:text-bone/50">
+                              {formatPrice(row[2])}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Interstate Express Delivery (1–3 Days) */}
-          <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
-            <div className="flex items-center justify-between border-b border-mist pb-3 dark:border-edge">
-              <div>
-                <h3 className="font-display text-base font-semibold">Express Interstate Delivery (1–3 Working Days)</h3>
-                <p className="text-xs text-ink/50 dark:text-bone/50">
-                  Fast express delivery rates by express zone 1 through 3.
-                </p>
+          {/* Interstate Zones Summary */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-card border border-mist bg-bone p-4 dark:border-edge dark:bg-carbon">
+              <h4 className="font-display text-xs font-bold uppercase tracking-wider text-ink/70 dark:text-bone/70 mb-3">
+                Standard Delivery Zones Coverage (5–7 Days)
+              </h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between border-b border-mist/30 py-1.5 dark:border-edge/30">
+                  <span className="font-semibold text-gold">Zone A</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">West (Ekiti, Ogun, Ondo, Osun, Oyo)</span>
+                </div>
+                <div className="flex justify-between border-b border-mist/30 py-1.5 dark:border-edge/30">
+                  <span className="font-semibold text-gold">Zone B</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">East (Abia, Anambra, Bayelsa, Delta, Ebonyi, Edo, Enugu, Imo, Kwara, Rivers)</span>
+                </div>
+                <div className="flex justify-between border-b border-mist/30 py-1.5 dark:border-edge/30">
+                  <span className="font-semibold text-gold">Zone C</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">Abuja (FCT)</span>
+                </div>
+                <div className="flex justify-between border-b border-mist/30 py-1.5 dark:border-edge/30">
+                  <span className="font-semibold text-gold">Zone D</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">North (Benue, Kaduna, Kano, Kogi, Nasarawa, Niger, Plateau, etc.)</span>
+                </div>
+                <div className="flex justify-between py-1.5">
+                  <span className="font-semibold text-gold">Zone E</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">Akwa Ibom & Cross River</span>
+                </div>
               </div>
-              <span className="rounded bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold uppercase tracking-wider">
-                Zones 1–3
-              </span>
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              {([1, 2, 3] as const).map((z) => (
-                <div key={z} className="rounded-card border border-mist bg-surface/40 p-3 dark:border-edge dark:bg-edge/10">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-ink/70 dark:text-bone/70">
-                    Express Zone {z} Rate (₦)
-                  </span>
-                  <input
-                    type="number"
-                    value={form.interstateExpress[z] ?? 20000}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        interstateExpress: {
-                          ...form.interstateExpress,
-                          [z]: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="input-field mt-1.5 font-mono text-sm font-bold text-gold"
-                  />
-                  <p className="mt-1 text-[11px] text-ink/50 dark:text-bone/50">
-                    Formatted: {formatPrice(form.interstateExpress[z] ?? 20000)}
-                  </p>
+            <div className="rounded-card border border-mist bg-bone p-4 dark:border-edge dark:bg-carbon">
+              <h4 className="font-display text-xs font-bold uppercase tracking-wider text-ink/70 dark:text-bone/70 mb-3">
+                Express Delivery Zones Coverage (1–3 Days)
+              </h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between border-b border-mist/30 py-1.5 dark:border-edge/30">
+                  <span className="font-semibold text-gold">Zone 1</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">Ekiti, Ogun, Ondo, Osun, Oyo</span>
                 </div>
-              ))}
+                <div className="flex justify-between border-b border-mist/30 py-1.5 dark:border-edge/30">
+                  <span className="font-semibold text-gold">Zone 2</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">Abia, Anambra, Bayelsa, Delta, Ebonyi, Edo, Enugu, Imo, Kwara, Rivers, Abuja, Benue, Kaduna, Kano, Kogi, Nasarawa, Niger, Plateau</span>
+                </div>
+                <div className="flex justify-between py-1.5">
+                  <span className="font-semibold text-gold">Zone 3</span>
+                  <span className="text-right text-ink/60 dark:text-bone/60">Adamawa, Bauchi, Borno, Gombe, Jigawa, Katsina, Kebbi, Sokoto, Taraba, Yobe, Zamfara, Akwa Ibom, Cross River</span>
+                </div>
+              </div>
             </div>
           </div>
 

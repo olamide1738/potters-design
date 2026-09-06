@@ -5,7 +5,7 @@ import {
   saveShippingSettings,
   subscribeToShippingSettings,
 } from "@/lib/shipping-db";
-import { COUNTRY_MAP, NIGERIAN_STATES } from "@/constants/shipping";
+import { COUNTRY_MAP, INTERSTATE_RATE_ROWS, NIGERIAN_STATES } from "@/constants/shipping";
 
 interface ShippingStoreState {
   settings: ShippingSettings;
@@ -47,10 +47,11 @@ export const useShippingStore = create<ShippingStoreState>((set) => {
 export const useShippingSettings = () => useShippingStore((s) => s.settings);
 
 /**
- * Calculates live interstate rates for a given Nigerian state using active shipping settings.
+ * Calculates live interstate rates for a given Nigerian state and package weight using active shipping settings.
  */
 export function getLiveInterstateRates(
   stateName: string,
+  weightKg: number = 2,
   settings: ShippingSettings = useShippingStore.getState().settings
 ) {
   const state = NIGERIAN_STATES.find((s) => s.name === stateName);
@@ -59,8 +60,12 @@ export function getLiveInterstateRates(
   const stdZone = state.zone as "A" | "B" | "C" | "D" | "E";
   const expZone = (state.expressZone ?? 2) as 1 | 2 | 3;
 
-  const stdFee = settings.interstateStandard?.[stdZone] ?? 12000;
-  const expFee = settings.interstateExpress?.[expZone] ?? 20000;
+  const rates = settings.interstateRates ?? DEFAULT_SHIPPING_SETTINGS.interstateRates ?? INTERSTATE_RATE_ROWS;
+  const roundedWeight = Math.max(2, Math.min(20, Math.ceil(weightKg)));
+  const rateRow = rates.find((r) => r[0] >= roundedWeight) ?? rates[rates.length - 1];
+
+  const stdFee = rateRow ? rateRow[1] : (settings.interstateStandard?.[stdZone] ?? 12000);
+  const expFee = rateRow ? rateRow[2] : (settings.interstateExpress?.[expZone] ?? 20000);
 
   return {
     standard: {

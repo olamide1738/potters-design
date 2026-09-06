@@ -1,22 +1,24 @@
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import { INTERSTATE_RATE_ROWS } from "@/constants/shipping";
 import type { ShippingSettings } from "@/types/shipping";
 
 const SETTINGS_DOC = "settings/shipping";
 
 export const DEFAULT_SHIPPING_SETTINGS: ShippingSettings = {
   interstateStandard: {
-    A: 11000,
+    A: 12000,
     B: 12000,
     C: 12000,
-    D: 13000,
-    E: 13500,
+    D: 12000,
+    E: 12000,
   },
   interstateExpress: {
-    1: 15000,
+    1: 20000,
     2: 20000,
-    3: 22000,
+    3: 20000,
   },
+  interstateRates: INTERSTATE_RATE_ROWS,
   lagosZones: [
     {
       id: "Lagos Mainland",
