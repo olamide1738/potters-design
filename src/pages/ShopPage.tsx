@@ -127,9 +127,9 @@ export function ShopPage() {
         </div>
       </div>
 
-      <div className="shell grid gap-10 py-12 lg:grid-cols-[260px_1fr]">
+      <div className="shell grid gap-10 py-12 lg:grid-cols-[260px_1fr] lg:items-start">
         {/* Filters — desktop */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block lg:sticky lg:top-28 lg:self-start max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 aesthetic-scrollbar">
           <ShopFilters filters={filters} onChange={update} onReset={reset} priceBounds={priceBounds} />
         </div>
 

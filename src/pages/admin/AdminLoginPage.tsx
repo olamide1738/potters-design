@@ -17,14 +17,29 @@ export function AdminLoginPage() {
 
   if (!loading && user) return <Navigate to={from} replace />;
 
+  const isMissingEnv = !import.meta.env.VITE_FIREBASE_API_KEY;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
       await signIn(email, password);
-    } catch {
-      setError("Incorrect email or password.");
+    } catch (err: unknown) {
+      const fbErr = err as { code?: string; message?: string };
+      console.error("Admin sign in failed:", fbErr);
+      const code = fbErr?.code || "";
+      if (code === "auth/invalid-api-key" || code === "auth/api-key-not-valid" || isMissingEnv) {
+        setError("Firebase API key missing or invalid. Please check your build environment variables on your host.");
+      } else if (code === "auth/unauthorized-domain") {
+        setError("This domain is not authorized. Add your host domain in Firebase Console → Authentication → Settings → Authorized domains.");
+      } else if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        setError("Incorrect email or password.");
+      } else if (code === "auth/too-many-requests") {
+        setError("Access temporarily disabled due to too many failed attempts. Try again later.");
+      } else {
+        setError(fbErr?.message || "Failed to sign in. Please verify your credentials and network connection.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -53,6 +68,15 @@ export function AdminLoginPage() {
             Sign in to manage catalog, inventory, orders & production.
           </p>
         </div>
+
+        {isMissingEnv && (
+          <div className="mb-6 rounded-card border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-800 dark:text-amber-300">
+            <strong>Missing Firebase Configuration!</strong>
+            <p className="mt-1 leading-relaxed">
+              Environment variables (<code>VITE_FIREBASE_API_KEY</code>, etc.) are not configured on this host. Please add them in your hosting provider&rsquo;s environment settings and rebuild.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div>

@@ -857,9 +857,16 @@ export function ProductPage() {
 
               <Section title="Refund policy">
                 <p>
-                  As a general policy, Potter's Design does not offer refunds on
-                  purchases. Refunds will only be considered where an item is
-                  confirmed defective or damaged upon delivery.
+                  As a general policy, Potter&rsquo;s Design does not offer refunds on
+                  purchases. Refunds or replacements will only be considered where an item is
+                  confirmed to be defective or damaged upon delivery. Please refer to{" "}
+                  <Link
+                    to="/terms"
+                    className="font-medium text-ink underline underline-offset-4 hover:text-gold dark:text-bone"
+                  >
+                    Terms &amp; Conditions
+                  </Link>{" "}
+                  for more details.
                 </p>
               </Section>
 
@@ -879,20 +886,39 @@ export function ProductPage() {
                     </li>
                   ))}
                 </ul>
-                <p>
+                <p className="mt-2">
                   Items purchased during sales, promotions, or clearance events are
                   not eligible for exchange, store credit, or refund.
                 </p>
               </Section>
 
-              <Section title="Defective items">
+              <Section title="Defective or damaged items">
                 <p>
-                  If you receive a defective item, contact us within{" "}
+                  If you receive an item that is defective or damaged, please contact us{" "}
                   <strong className="text-ink dark:text-bone">
-                    24 hours of delivery
-                  </strong>
-                  . Upon inspection, if the defect is confirmed, we will offer a
-                  replacement or full refund.
+                    within 24 hours of delivery
+                  </strong>{" "}
+                  and provide clear video evidence showing the issue.
+                </p>
+                <p className="mt-2">
+                  Once the item and reported issue have been inspected and the defect is confirmed to have originated from Potter&rsquo;s Design, we will, at our discretion, offer either:
+                </p>
+                <ul className="mt-2 space-y-1.5 pl-4">
+                  {[
+                    "A replacement of the affected item; or",
+                    "A full refund for the affected item.",
+                  ].map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-ink/40 dark:bg-bone/40" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2">
+                  Claims made after the 24-hour reporting period may not be accepted.
+                </p>
+                <p className="mt-2 text-xs text-ink/70 dark:text-bone/70">
+                  Please note that issues resulting from improper handling, use, alterations, washing, or care after delivery will not be considered manufacturing defects and will not qualify for a refund or replacement.
                 </p>
               </Section>
             </div>

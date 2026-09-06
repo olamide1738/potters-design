@@ -77,7 +77,7 @@ const FAQS = [
       },
       {
         q: "Do you offer refunds?",
-        a: "As a general policy, we don't offer refunds. The exception is if an item arrives defective or damaged — in that case, contact us within 24 hours of delivery with photos and we'll make it right with a replacement or full refund.",
+        a: "As a general policy, Potter’s Design does not offer refunds on purchases. Refunds or replacements will only be considered where an item is confirmed to be defective or damaged upon delivery. Please contact us within 24 hours of delivery with clear video evidence. Once inspected and confirmed, we will, at our discretion, offer either a replacement or a full refund for the affected item. Please refer to Terms & Conditions for more details.",
       },
       {
         q: "Are sale items returnable?",

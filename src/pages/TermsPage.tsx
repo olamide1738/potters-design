@@ -55,15 +55,41 @@ export function TermsPage() {
             </ul>
           </Section>
 
-          <Section title="3. REFUND & EXCHANGE POLICY">
-            <ul>
-              <li>Approved claims may qualify for a <strong>refund, store credit, or exchange</strong>, subject to inspection and approval.</li>
-              <li>Custom-made garments made to customer&rsquo;s specific measurements are <strong>non-refundable and non-exchangeable</strong>.</li>
-              <li>Eligible returns may qualify for an <strong>exchange or store credit</strong> depending on the nature of the claim.</li>
-              <li>Defective or incorrect items must be reported within <strong>24 hours with a clear unedited video</strong>.</li>
-              <li>Returned items must be <strong>received, inspected and approved</strong>.</li>
-              <li>Claims made after <strong>48 hours (Lagos)</strong> or <strong>72 hours (outside Lagos)</strong> will not be considered.</li>
-            </ul>
+          <Section title="3. REFUND POLICY">
+            <p>
+              As a general policy, Potter&rsquo;s Design does not offer refunds on purchases. Refunds or replacements will only be considered where an item is confirmed to be defective or damaged upon delivery. Please refer to <strong>Terms &amp; Conditions</strong> for more details.
+            </p>
+            <div className="mt-4 border-t border-mist/60 pt-4 dark:border-edge/60">
+              <h3 className="font-display text-base font-semibold text-ink dark:text-bone">
+                Defective or Damaged Items
+              </h3>
+              <p className="mt-2">
+                If you receive an item that is defective or damaged, please contact us <strong>within 24 hours of delivery</strong> and provide clear video evidence showing the issue.
+              </p>
+              <p className="mt-2">
+                Once the item and reported issue have been inspected and the defect is confirmed to have originated from Potter&rsquo;s Design, we will, at our discretion, offer either:
+              </p>
+              <ul className="my-2 ml-4 list-disc space-y-1">
+                <li>A replacement of the affected item; or</li>
+                <li>A full refund for the affected item.</li>
+              </ul>
+              <p className="mt-2">
+                Claims made after the 24-hour reporting period may not be accepted.
+              </p>
+              <p className="mt-2">
+                Please note that issues resulting from improper handling, use, alterations, washing, or care after delivery will not be considered manufacturing defects and will not qualify for a refund or replacement.
+              </p>
+            </div>
+            <div className="mt-4 border-t border-mist/60 pt-4 dark:border-edge/60">
+              <h3 className="font-display text-base font-semibold text-ink dark:text-bone">
+                Exchanges &amp; Custom Orders
+              </h3>
+              <ul className="mt-2 ml-4 list-disc space-y-1.5">
+                <li>Approved claims may qualify for a <strong>refund, store credit, or exchange</strong>, subject to inspection and approval.</li>
+                <li>Custom-made garments made to customer&rsquo;s specific measurements are <strong>non-refundable and non-exchangeable</strong>.</li>
+                <li>Eligible returns may qualify for an <strong>exchange or store credit</strong> depending on the nature of the claim.</li>
+              </ul>
+            </div>
           </Section>
 
           <Section title="4. RETURN ELIGIBILITY">
