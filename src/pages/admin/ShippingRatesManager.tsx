@@ -561,16 +561,6 @@ export function ShippingRatesManager() {
               />
             </div>
 
-            {/* Unassigned Countries Highlight Banner */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-card border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">⚠️</span>
-                <span>
-                  <strong>Unassigned Countries:</strong> <strong>Cameroon (CM)</strong>, <strong>Jordan (JO)</strong>, and <strong>Venezuela (VE)</strong> do not fall into standard rate zones (manual quote required).
-                </span>
-              </div>
-            </div>
-
             <div className="max-h-[500px] overflow-y-auto pr-1">
               <table className="w-full text-left text-xs">
                 <thead>
@@ -582,40 +572,15 @@ export function ShippingRatesManager() {
                 </thead>
                 <tbody>
                   {SHIPPING_COUNTRIES.filter((c) => c.name.toLowerCase().includes(searchCountry.toLowerCase())).map(
-                    (c) => {
-                      const isUnassigned = ["JO", "VE", "CM"].includes(c.code);
-                      return (
-                        <tr
-                          key={c.code}
-                          className={`border-b border-mist/30 dark:border-edge/30 transition-colors ${
-                            isUnassigned ? "bg-amber-500/15 dark:bg-amber-500/20" : ""
-                          }`}
-                        >
-                          <td className="py-2 font-medium">
-                            <div className="flex items-center gap-2">
-                              <span>{c.name}</span>
-                              {isUnassigned && (
-                                <span className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
-                                  No Zone
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-2 font-mono text-ink/50">{c.code}</td>
-                          <td className="py-2 font-semibold">
-                            {isUnassigned ? (
-                              <span className="font-bold text-amber-600 dark:text-amber-400">
-                                Unassigned
-                              </span>
-                            ) : c.code === "NG" ? (
-                              <span className="text-gold">Domestic</span>
-                            ) : (
-                              <span className="text-gold">Zone {c.zone}</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    }
+                    (c) => (
+                      <tr key={c.code} className="border-b border-mist/30 dark:border-edge/30">
+                        <td className="py-2 font-medium">{c.name}</td>
+                        <td className="py-2 font-mono text-ink/50">{c.code}</td>
+                        <td className="py-2 font-semibold text-gold">
+                          {c.code === "NG" ? "Domestic" : `Zone ${c.zone}`}
+                        </td>
+                      </tr>
+                    )
                   )}
                 </tbody>
               </table>
