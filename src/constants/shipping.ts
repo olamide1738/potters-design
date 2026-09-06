@@ -22,7 +22,7 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   // ── Zone 2 (Africa) ─────────────────────────────────────────
   { code: "BJ", name: "Benin", currency: "XOF", zone: 2 },
   { code: "BF", name: "Burkina Faso", currency: "XOF", zone: 2 },
-  { code: "CM", name: "Cameroon", currency: "XAF", zone: 2 },
+  { code: "CM", name: "Cameroon", currency: "XAF", zone: 0 },
   { code: "CV", name: "Cape Verde", currency: "CVE", zone: 2 },
   { code: "CF", name: "Central African Republic", currency: "XAF", zone: 2 },
   { code: "TD", name: "Chad", currency: "XAF", zone: 2 },
@@ -141,7 +141,7 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   { code: "IR", name: "Iran", currency: "IRR", zone: 6 },
   { code: "IQ", name: "Iraq", currency: "IQD", zone: 6 },
   { code: "IL", name: "Israel", currency: "ILS", zone: 6 },
-  { code: "JO", name: "Jordan", currency: "JOD", zone: 6 },
+  { code: "JO", name: "Jordan", currency: "JOD", zone: 0 },
   { code: "KW", name: "Kuwait", currency: "KWD", zone: 6 },
   { code: "LB", name: "Lebanon", currency: "LBP", zone: 6 },
   { code: "OM", name: "Oman", currency: "OMR", zone: 6 },
@@ -258,7 +258,7 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   { code: "TV", name: "Tuvalu", currency: "AUD", zone: 8 },
   { code: "UY", name: "Uruguay", currency: "UYU", zone: 8 },
   { code: "VU", name: "Vanuatu", currency: "VUV", zone: 8 },
-  { code: "VE", name: "Venezuela", currency: "USD", zone: 8 },
+  { code: "VE", name: "Venezuela", currency: "USD", zone: 0 },
   { code: "VG", name: "Virgin Islands (British)", currency: "USD", zone: 8 },
   { code: "VI", name: "Virgin Islands (US)", currency: "USD", zone: 8 },
 ];
