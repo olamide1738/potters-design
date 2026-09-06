@@ -19,6 +19,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Red", "Yellow"],
     sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "fitted",
     inStock: true,
     onSale: false,
@@ -49,6 +50,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "aso-oke"],
     colors: ["Pink", "Lime"],
     sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "fitted",
     inStock: true,
     onSale: false,
@@ -81,6 +83,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "akwete"],
     colors: ["Blue"],
     sizes: ["Free Size"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "loose",
     inStock: true,
     onSale: false,
@@ -111,6 +114,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "asooke", "women"],
     colors: ["Green", "Yellow"],
     sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "fitted",
     inStock: true,
     onSale: true,
@@ -140,6 +144,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "aso-oke"],
     colors: ["Gray", "Silver"],
     sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "fitted",
     inStock: true,
     onSale: false,
@@ -171,6 +176,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Blue", "Gray"],
     sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "loose",
     inStock: true,
     onSale: false,
@@ -200,6 +206,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Green"],
     sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "loose",
     inStock: true,
     onSale: false,
@@ -223,6 +230,7 @@ export const PRODUCTS: Product[] = [
     tags: ["women", "fashion", "akwete"],
     colors: ["Yellow", "Gold", "Earth"],
     sizes: ["Free Size"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "loose",
     inStock: true,
     onSale: false,
@@ -268,6 +276,7 @@ export const PRODUCTS: Product[] = [
     tags: ["aso-oke", "women", "fashion"],
     colors: ["Ivory", "Copper"],
     sizes: ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22"],
+    lengths: ["Short", "Regular", "Tall"],
     fitType: "fitted",
     inStock: true,
     onSale: false,
@@ -315,15 +324,7 @@ export const PRODUCT_COLORS = [
   "Beige",
 ];
 
-export const PRODUCT_LENGTHS = [
-  "Long",
-  "Short",
-  "Midi",
-  "Mini",
-  "Floor Length",
-  "Knee Length",
-  "Ankle Length",
-];
+export const PRODUCT_LENGTHS = ["Short", "Regular", "Tall"];
 
 /** PD numeric sizes for fitted outfits (4–22) */
 export const PRODUCT_FITTED_SIZES = [

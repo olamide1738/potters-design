@@ -56,7 +56,9 @@ export function ProductForm({ initial, existingIds, onClose, onSaved }: Props) {
   const [gallery, setGallery] = useState<string[]>(initial?.gallery ?? []);
   const [colors, setColors] = useState<string[]>(initial?.colors ?? []);
   const [sizes, setSizes] = useState<string[]>(initial?.sizes ?? []);
-  const [lengths, setLengths] = useState<string[]>(initial?.lengths ?? []);
+  const [lengths, setLengths] = useState<string[]>(
+    initial?.lengths ?? ["Short", "Regular", "Tall"],
+  );
 
   const handleCategoryChange = (newCat: ProductCategory) => {
     setCategory(newCat);
