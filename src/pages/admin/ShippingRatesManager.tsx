@@ -3,7 +3,7 @@ import { useShippingStore } from "@/store/useShippingStore";
 import { useToastStore } from "@/store/useToastStore";
 import { DEFAULT_SHIPPING_SETTINGS } from "@/lib/shipping-db";
 import type { ShippingSettings, LagosDeliveryZoneSetting } from "@/types/shipping";
-import { INTERSTATE_RATE_ROWS, NIGERIAN_STATES, SHIPPING_COUNTRIES } from "@/constants/shipping";
+import { INTERSTATE_RATE_ROWS, NIGERIAN_STATES, SHIPPING_COUNTRIES, UNZONED_COUNTRIES } from "@/constants/shipping";
 import { formatPrice } from "@/lib/format";
 
 type SubTab = "interstate" | "international" | "routing";
@@ -511,7 +511,7 @@ export function ShippingRatesManager() {
 
       {/* ── TAB 3: STATE & COUNTRY ROUTING RULES ────────────────────────── */}
       {activeSubTab === "routing" && (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* Nigerian States Routing */}
           <div className="rounded-card border border-mist bg-bone p-5 dark:border-edge dark:bg-carbon">
             <div className="mb-3 flex items-center justify-between">
@@ -571,7 +571,7 @@ export function ShippingRatesManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {SHIPPING_COUNTRIES.filter((c) => c.name.toLowerCase().includes(searchCountry.toLowerCase())).map(
+                  {SHIPPING_COUNTRIES.filter((c) => c.zone >= 0 && c.name.toLowerCase().includes(searchCountry.toLowerCase())).map(
                     (c) => (
                       <tr key={c.code} className="border-b border-mist/30 dark:border-edge/30">
                         <td className="py-2 font-medium">{c.name}</td>
@@ -582,6 +582,48 @@ export function ShippingRatesManager() {
                       </tr>
                     )
                   )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Unzoned Standalone Countries Column */}
+          <div className="rounded-card border border-amber-500/40 bg-amber-500/5 p-5 dark:border-amber-500/30 dark:bg-amber-500/10">
+            <div className="mb-3 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-base font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                  <span>🌐</span> Unzoned / Standalone
+                </h3>
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                  {UNZONED_COUNTRIES.length} Countries
+                </span>
+              </div>
+              <p className="text-[11px] text-ink/60 dark:text-bone/60">
+                Countries standing on a separate column with no standard zone assignment.
+              </p>
+            </div>
+
+            <div className="max-h-[500px] overflow-y-auto pr-1">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-amber-500/20 text-ink/50 dark:border-amber-500/20 dark:text-bone/50">
+                    <th className="py-2">Country</th>
+                    <th className="py-2">Code</th>
+                    <th className="py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {UNZONED_COUNTRIES.map((c) => (
+                    <tr key={c.code} className="border-b border-amber-500/15">
+                      <td className="py-2.5 font-semibold text-ink dark:text-bone">{c.name}</td>
+                      <td className="py-2.5 font-mono text-ink/50">{c.code}</td>
+                      <td className="py-2.5">
+                        <span className="inline-block rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                          Unzoned
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

@@ -22,7 +22,7 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   // ── Zone 2 (Africa) ─────────────────────────────────────────
   { code: "BJ", name: "Benin", currency: "XOF", zone: 2 },
   { code: "BF", name: "Burkina Faso", currency: "XOF", zone: 2 },
-  { code: "CM", name: "Cameroon", currency: "XAF", zone: 2 },
+  { code: "CM", name: "Cameroon", currency: "XAF", zone: -1 },
   { code: "CV", name: "Cape Verde", currency: "CVE", zone: 2 },
   { code: "CF", name: "Central African Republic", currency: "XAF", zone: 2 },
   { code: "TD", name: "Chad", currency: "XAF", zone: 2 },
@@ -136,12 +136,12 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   { code: "ZW", name: "Zimbabwe", currency: "USD", zone: 5 },
 
   // ── Zone 6 (Middle East & Gulf) ─────────────────────────────
-  { code: "AF", name: "Afghanistan", currency: "AFN", zone: 6 },
+  { code: "AF", name: "Afghanistan", currency: "AFN", zone: -1 },
   { code: "BH", name: "Bahrain", currency: "BHD", zone: 6 },
   { code: "IR", name: "Iran", currency: "IRR", zone: 6 },
   { code: "IQ", name: "Iraq", currency: "IQD", zone: 6 },
   { code: "IL", name: "Israel", currency: "ILS", zone: 6 },
-  { code: "JO", name: "Jordan", currency: "JOD", zone: 6 },
+  { code: "JO", name: "Jordan", currency: "JOD", zone: -1 },
   { code: "KW", name: "Kuwait", currency: "KWD", zone: 6 },
   { code: "LB", name: "Lebanon", currency: "LBP", zone: 6 },
   { code: "OM", name: "Oman", currency: "OMR", zone: 6 },
@@ -258,10 +258,15 @@ export const SHIPPING_COUNTRIES: ShippingCountry[] = [
   { code: "TV", name: "Tuvalu", currency: "AUD", zone: 8 },
   { code: "UY", name: "Uruguay", currency: "UYU", zone: 8 },
   { code: "VU", name: "Vanuatu", currency: "VUV", zone: 8 },
-  { code: "VE", name: "Venezuela", currency: "USD", zone: 8 },
+  { code: "VE", name: "Venezuela", currency: "USD", zone: -1 },
   { code: "VG", name: "Virgin Islands (British)", currency: "USD", zone: 8 },
   { code: "VI", name: "Virgin Islands (US)", currency: "USD", zone: 8 },
 ];
+
+export const UNZONED_COUNTRY_CODES = ["VE", "JO", "AF", "CM"];
+export const UNZONED_COUNTRIES: ShippingCountry[] = SHIPPING_COUNTRIES.filter((c) =>
+  UNZONED_COUNTRY_CODES.includes(c.code),
+);
 
 // Quick lookup by country code
 export const COUNTRY_MAP: Record<string, ShippingCountry> = Object.fromEntries(
@@ -318,7 +323,7 @@ function ceilToRateStep(kg: number): number {
  */
 export function getShippingRate(countryCode: string, weightKg: number): number | null {
   const country = COUNTRY_MAP[countryCode];
-  if (!country || country.zone === 0) return null; // domestic
+  if (!country || country.zone <= 0) return null; // domestic (0) or unzoned (-1)
 
   const roundedWeight = Math.ceil(weightKg);
   const step = ceilToRateStep(Math.min(roundedWeight, 30));
@@ -330,7 +335,7 @@ export function getShippingRate(countryCode: string, weightKg: number): number |
 
 export function getZoneName(countryCode: string, _weightKg?: number): string | null {
   const country = COUNTRY_MAP[countryCode];
-  if (!country || country.zone === 0) return null;
+  if (!country || country.zone <= 0) return null;
   return `Zone ${country.zone}`;
 }
 
