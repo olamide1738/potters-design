@@ -324,7 +324,7 @@ export const PRODUCT_COLORS = [
   "Beige",
 ];
 
-export const PRODUCT_LENGTHS = ["Short", "Regular", "Tall"];
+export const PRODUCT_LENGTHS = ["Short", "Long", "Regular", "Tall", "Midi", "Mini"];
 
 /** PD numeric sizes for fitted outfits (4–22) */
 export const PRODUCT_FITTED_SIZES = [
