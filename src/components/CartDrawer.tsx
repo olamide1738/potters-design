@@ -35,6 +35,11 @@ export function CartDrawer() {
     };
   }, [cartOpen]);
 
+  const appliedDiscount = useStore((s) => s.appliedDiscount);
+  const removeDiscount = useStore((s) => s.removeDiscount);
+  const discountAmount = useStore((s) => s.cartDiscountAmount());
+  const finalSubtotal = Math.max(0, subtotal - discountAmount);
+
   return (
     <>
       {/* Backdrop */}
@@ -120,16 +125,15 @@ export function CartDrawer() {
                               {[line.size, line.color, line.length].filter(Boolean).join(" / ")}
                             </p>
                           )}
-                          <p className="mt-1 text-sm font-semibold">
-                            {formatPrice(line.unitPrice)}
-                          </p>
                         </div>
+                        <p className="font-mono text-sm font-semibold">
+                          {formatPrice(line.unitPrice * line.quantity)}
+                        </p>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center rounded-card border border-mist dark:border-edge">
                           <button
-                            aria-label="Decrease quantity"
                             onClick={() =>
                               setQuantity(
                                 line.productId,
@@ -139,15 +143,12 @@ export function CartDrawer() {
                                 line.length,
                               )
                             }
-                            className="px-2.5 py-1.5 text-base leading-none hover:text-gold"
+                            className="px-2 py-1 text-xs text-ink/50 hover:text-ink dark:text-bone/50 dark:hover:text-bone"
                           >
                             −
                           </button>
-                          <span className="w-7 text-center text-sm font-medium">
-                            {line.quantity}
-                          </span>
+                          <span className="px-2 text-xs font-semibold">{line.quantity}</span>
                           <button
-                            aria-label="Increase quantity"
                             onClick={() =>
                               setQuantity(
                                 line.productId,
@@ -157,11 +158,12 @@ export function CartDrawer() {
                                 line.length,
                               )
                             }
-                            className="px-2.5 py-1.5 text-base leading-none hover:text-gold"
+                            className="px-2 py-1 text-xs text-ink/50 hover:text-ink dark:text-bone/50 dark:hover:text-bone"
                           >
                             +
                           </button>
                         </div>
+
                         <button
                           onClick={() =>
                             removeFromCart(
@@ -171,7 +173,7 @@ export function CartDrawer() {
                               line.length,
                             )
                           }
-                          className="text-xs text-ink/40 underline underline-offset-4 transition-colors hover:text-ink dark:text-bone/40 dark:hover:text-bone"
+                          className="text-xs text-ink/40 hover:text-red-500 dark:text-bone/40"
                         >
                           Remove
                         </button>
@@ -220,13 +222,36 @@ export function CartDrawer() {
         {/* Footer */}
         {cart.length > 0 && (
           <div className="shrink-0 border-t border-mist px-6 py-5 dark:border-edge">
-            <div className="flex items-baseline justify-between">
-              <span className="font-semibold">Subtotal</span>
-              <span className="font-mono text-lg font-semibold text-gold">
-                {formatPrice(subtotal)}
-              </span>
+            <div className="space-y-1.5">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-ink/70 dark:text-bone/70">Subtotal</span>
+                <span className="font-mono font-medium">{formatPrice(subtotal)}</span>
+              </div>
+
+              {appliedDiscount && discountAmount > 0 && (
+                <div className="flex items-center justify-between text-xs text-green-600 dark:text-green-400">
+                  <div className="flex items-center gap-1.5">
+                    <span>10% Welcome Discount ({appliedDiscount.code})</span>
+                    <button
+                      onClick={removeDiscount}
+                      className="text-[10px] text-ink/40 hover:text-red-500 dark:text-bone/40"
+                    >
+                      [Remove]
+                    </button>
+                  </div>
+                  <span className="font-mono font-semibold">-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
+
+              <div className="flex items-baseline justify-between pt-1 border-t border-mist/40 dark:border-edge/40">
+                <span className="font-semibold">Estimated Total</span>
+                <span className="font-mono text-lg font-semibold text-gold">
+                  {formatPrice(finalSubtotal)}
+                </span>
+              </div>
             </div>
-            <p className="mt-0.5 text-xs text-ink/50 dark:text-bone/50">
+
+            <p className="mt-1 text-xs text-ink/50 dark:text-bone/50">
               Taxes and shipping calculated at checkout
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3">

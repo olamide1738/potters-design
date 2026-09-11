@@ -3,10 +3,17 @@ import { persist } from "zustand/middleware";
 import type { CartLine, Product } from "@/types";
 import { getItemUnitPrice } from "@/lib/format";
 
+export interface AppliedDiscount {
+  code: string;
+  percentage: number;
+  email?: string;
+}
+
 interface StoreState {
   cart: CartLine[];
   wishlist: number[];
   compare: number[];
+  appliedDiscount: AppliedDiscount | null;
 
   addToCart: (product: Product, opts?: { size?: string; color?: string; length?: string; quantity?: number }) => void;
   removeFromCart: (productId: number, size?: string, color?: string, length?: string) => void;
@@ -16,8 +23,12 @@ interface StoreState {
   toggleWishlist: (productId: number) => void;
   toggleCompare: (productId: number) => void;
 
+  applyDiscount: (discount: AppliedDiscount) => void;
+  removeDiscount: () => void;
+
   cartCount: () => number;
   cartSubtotal: () => number;
+  cartDiscountAmount: () => number;
 }
 
 const sameLine = (l: CartLine, productId: number, size?: string, color?: string, length?: string) =>
@@ -29,6 +40,7 @@ export const useStore = create<StoreState>()(
       cart: [],
       wishlist: [],
       compare: [],
+      appliedDiscount: null,
 
       addToCart: (product, opts = {}) =>
         set((state) => {
@@ -118,8 +130,17 @@ export const useStore = create<StoreState>()(
             : [...state.compare, productId],
         })),
 
+      applyDiscount: (discount) => set({ appliedDiscount: discount }),
+      removeDiscount: () => set({ appliedDiscount: null }),
+
       cartCount: () => get().cart.reduce((n, l) => n + l.quantity, 0),
       cartSubtotal: () => get().cart.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0),
+      cartDiscountAmount: () => {
+        const sub = get().cartSubtotal();
+        const disc = get().appliedDiscount;
+        if (!disc || !disc.percentage) return 0;
+        return Math.round(sub * (disc.percentage / 100));
+      },
     }),
     { name: "potters-design-store" },
   ),

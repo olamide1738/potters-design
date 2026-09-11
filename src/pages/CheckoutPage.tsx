@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { verifyAndSavePaystackOrder, saveBankOrder, type OrderPayload } from "@/lib/orders";
+import { isNewCustomerEmail, recordCustomerEmailLocally } from "@/lib/customer-check";
 
 declare global {
   interface Window {
@@ -152,6 +153,9 @@ const LAGOS_ZONES = [
 export function CheckoutPage() {
   const cart = useStore((s) => s.cart);
   const subtotal = useStore((s) => s.cartSubtotal());
+  const appliedDiscount = useStore((s) => s.appliedDiscount);
+  const removeDiscount = useStore((s) => s.removeDiscount);
+  const discountAmount = useStore((s) => s.cartDiscountAmount());
   const navigate = useNavigate();
   const products = useProducts();
 
@@ -406,7 +410,24 @@ export function CheckoutPage() {
   );
 
   const shippingFee = isPickup ? 0 : isDomestic ? (domesticRate?.fee ?? null) : intlFee;
-  const total = subtotal + (shippingFee ?? 0);
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+  const total = discountedSubtotal + (shippingFee ?? 0);
+
+  // Verify that the email entered on checkout form is valid for 10% Welcome Discount
+  useEffect(() => {
+    if (!appliedDiscount || appliedDiscount.code !== "WELCOME10") return;
+    const trimmed = form.email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) return;
+
+    const timer = setTimeout(async () => {
+      const isNew = await isNewCustomerEmail(trimmed);
+      if (!isNew) {
+        removeDiscount();
+        addToast("Notice: 10% Welcome Discount removed because this email has already placed an order before.");
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [form.email, appliedDiscount, removeDiscount, addToast]);
 
 
 
@@ -524,17 +545,12 @@ export function CheckoutPage() {
           // Paystack's SDK rejects async functions here ("Attribute callback
           // must be a valid function") — must be a plain function that
           // kicks off the async work itself, not one that returns a Promise.
-          callback: (response) => {
+          callback: (response: { reference: string }) => {
             setSubmitting(true);
+            recordCustomerEmailLocally(form.email);
             verifyAndSavePaystackOrder(response.reference, orderData)
-              .then((orderId) => {
-                navigate("/order-confirmation", {
-                  state: { orderId, paymentMethod: "paystack", email: form.email },
-                });
-              })
-              .catch(() => {
-                setSubmitting(false);
-                // Payment verified on Paystack but backend save failed — surface reference
+              .catch(() => {})
+              .finally(() => {
                 navigate("/order-confirmation", {
                   state: { orderId: response.reference, paymentMethod: "paystack", email: form.email },
                 });
@@ -552,6 +568,7 @@ export function CheckoutPage() {
 
     // Bank transfer — save pending order
     setSubmitting(true);
+    recordCustomerEmailLocally(form.email);
     saveBankOrder(buildOrderPayload())
       .then((orderId) => {
         navigate("/order-confirmation", {
@@ -1186,6 +1203,22 @@ export function CheckoutPage() {
               <span>Subtotal</span>
               <span className="font-mono">{convert(subtotal)}</span>
             </div>
+
+            {appliedDiscount && discountAmount > 0 && (
+              <div className="flex items-center justify-between text-xs text-green-600 dark:text-green-400">
+                <div className="flex items-center gap-1.5">
+                  <span>10% Welcome Discount ({appliedDiscount.code})</span>
+                  <button
+                    type="button"
+                    onClick={removeDiscount}
+                    className="text-[10px] text-ink/40 hover:text-red-500 dark:text-bone/40"
+                  >
+                    [Remove]
+                  </button>
+                </div>
+                <span className="font-mono font-semibold">-{convert(discountAmount)}</span>
+              </div>
+            )}
 
             {/* Shipping line */}
             <div className="flex items-start justify-between text-ink/60 dark:text-bone/60">
