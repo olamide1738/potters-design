@@ -13,7 +13,7 @@ export function getDb() {
 export { FieldValue };
 export const resend = new Resend(process.env.RESEND_API_KEY ?? "");
 export const EMAIL_FROM = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
-export const STORE_EMAIL = process.env.STORE_EMAIL ?? "pottersdesignltd@gmail.com";
+export const STORE_EMAIL = process.env.STORE_EMAIL ?? "pottersdesigning@gmail.com";
 
 export interface CartLine {
   productId: number;

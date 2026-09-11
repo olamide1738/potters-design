@@ -1,8 +1,27 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import type { Product, Order, OrderStatus, OrderProductionStatus } from "@/types";
 import { useProductStore } from "@/store/useProductStore";
 import { useToastStore } from "@/store/useToastStore";
 import { formatPrice, formatProductPrice } from "@/lib/format";
+
+function playOrderChime() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  } catch {}
+}
 import {
   createOrUpdateProduct,
   deleteProduct,
@@ -56,13 +75,17 @@ export function AdminDashboard() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [seeding, setSeeding] = useState(false);
 
-  // Live orders state
+  // Live orders & real-time popup state
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [orderQuery, setOrderQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+
+  const [newOrderPopup, setNewOrderPopup] = useState<Order | null>(null);
+  const isInitialLoadRef = useRef(true);
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
 
   // Pipeline state
   const [updatingProductionId, setUpdatingProductionId] = useState<string | null>(null);
@@ -71,10 +94,23 @@ export function AdminDashboard() {
   const [logisticsZoneFilter, setLogisticsZoneFilter] = useState<string>("all");
   const [logisticsFulfillmentFilter, setLogisticsFulfillmentFilter] = useState<string>("all");
 
-  // Subscribe to live orders
+  // Subscribe to live orders & trigger real-time modal popup + chime + toast on new orders
   useEffect(() => {
     return subscribeToOrders(
       (list) => {
+        if (isInitialLoadRef.current) {
+          knownOrderIdsRef.current = new Set(list.map((o) => o.id));
+          isInitialLoadRef.current = false;
+        } else {
+          // Detect any newly created order
+          const newlyArrived = list.find((o) => !knownOrderIdsRef.current.has(o.id));
+          if (newlyArrived) {
+            knownOrderIdsRef.current.add(newlyArrived.id);
+            setNewOrderPopup(newlyArrived);
+            playOrderChime();
+            addToast(`🚨 NEW ORDER RECEIVED! Order #${newlyArrived.id} - ${formatPrice(newlyArrived.total)}`);
+          }
+        }
         setOrders(list);
         setOrdersLoaded(true);
       },
@@ -1299,6 +1335,170 @@ export function AdminDashboard() {
                 className="btn-primary py-2 px-5 text-sm"
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── NEW ORDER RECEIVED POPUP MODAL ────────────────────────── */}
+      {newOrderPopup && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="New order received"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+        >
+          <div
+            className="fixed inset-0 bg-ink/75 backdrop-blur-md transition-opacity"
+            onClick={() => setNewOrderPopup(null)}
+          />
+
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border-2 border-gold bg-bone p-6 shadow-2xl dark:border-gold dark:bg-carbon">
+            {/* Header banner */}
+            <div className="mb-4 flex items-center justify-between border-b border-mist/50 pb-4 dark:border-edge/50">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-gold/20 text-gold animate-bounce">
+                  <span className="text-xl">🔔</span>
+                </div>
+                <div>
+                  <h2 className="font-display text-xl font-bold text-gold">
+                    NEW ORDER RECEIVED!
+                  </h2>
+                  <p className="text-xs text-ink/60 dark:text-bone/60">
+                    Order Ref: <span className="font-mono font-bold text-ink dark:text-bone">#{newOrderPopup.id}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNewOrderPopup(null)}
+                aria-label="Close popup"
+                className="grid h-8 w-8 place-items-center rounded-full bg-mist/50 text-ink/70 hover:bg-mist dark:bg-edge/50 dark:text-bone/70"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Details content */}
+            <div className="max-h-[65vh] space-y-4 overflow-y-auto pr-1">
+              {/* Customer info */}
+              <div className="rounded-card border border-mist bg-surface p-3.5 dark:border-edge dark:bg-edge/40">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gold">
+                  Customer Details
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-ink/60 dark:text-bone/60">Name:</span>{" "}
+                    <strong className="text-ink dark:text-bone">
+                      {newOrderPopup.customer.firstName} {newOrderPopup.customer.lastName}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-ink/60 dark:text-bone/60">Email:</span>{" "}
+                    <a href={`mailto:${newOrderPopup.customer.email}`} className="text-gold underline">
+                      {newOrderPopup.customer.email}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-ink/60 dark:text-bone/60">Phone:</span>{" "}
+                    <a href={`tel:${newOrderPopup.customer.phone}`} className="font-mono font-medium">
+                      {newOrderPopup.customer.phone}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-ink/60 dark:text-bone/60">Payment:</span>{" "}
+                    <span className="font-semibold uppercase">{newOrderPopup.paymentMethod}</span> ({newOrderPopup.status})
+                  </div>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="rounded-card border border-mist bg-surface p-3.5 dark:border-edge dark:bg-edge/40">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gold">
+                  Items Ordered ({newOrderPopup.items.length})
+                </p>
+                <div className="space-y-2">
+                  {newOrderPopup.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between border-b border-mist/30 pb-2 text-xs last:border-0 last:pb-0 dark:border-edge/30"
+                    >
+                      <div className="flex items-center gap-2">
+                        {item.image && (
+                          <img src={item.image} alt={item.name} className="h-10 w-9 rounded object-cover" />
+                        )}
+                        <div>
+                          <p className="font-semibold">{item.name}</p>
+                          <p className="text-[10px] text-ink/50 dark:text-bone/50">
+                            {[
+                              item.size && `Size: ${item.size}`,
+                              item.color && `Color: ${item.color}`,
+                              item.length && `Length: ${item.length}`,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right font-mono">
+                        <p className="font-semibold">{formatPrice(item.unitPrice * item.quantity)}</p>
+                        <p className="text-[10px] text-ink/50 dark:text-bone/50">Qty: {item.quantity}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fulfillment & Totals */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-card border border-mist bg-surface p-3.5 text-xs dark:border-edge dark:bg-edge/40">
+                  <p className="mb-1 font-semibold uppercase tracking-wider text-gold">
+                    Fulfillment ({newOrderPopup.fulfillment})
+                  </p>
+                  {newOrderPopup.fulfillment === "pickup" ? (
+                    <p className="text-ink/70 dark:text-bone/70">Store Pickup (Mainland Lagos)</p>
+                  ) : newOrderPopup.shippingAddress ? (
+                    <p className="text-ink/80 dark:text-bone/80">
+                      {newOrderPopup.shippingAddress.address}, {newOrderPopup.shippingAddress.city},{" "}
+                      {newOrderPopup.shippingAddress.state}, {newOrderPopup.shippingAddress.countryCode}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="rounded-card border border-mist bg-surface p-3.5 text-xs space-y-1 dark:border-edge dark:bg-edge/40">
+                  <div className="flex justify-between text-ink/60 dark:text-bone/60">
+                    <span>Subtotal:</span>
+                    <span className="font-mono">{formatPrice(newOrderPopup.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-ink/60 dark:text-bone/60">
+                    <span>Shipping:</span>
+                    <span className="font-mono">{formatPrice(newOrderPopup.shippingFee)}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-mist pt-1 font-bold text-sm text-gold dark:border-edge">
+                    <span>Total Amount:</span>
+                    <span className="font-mono">{formatPrice(newOrderPopup.total)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="mt-5 flex justify-end gap-3 border-t border-mist/50 pt-4 dark:border-edge/50">
+              <button
+                onClick={() => setNewOrderPopup(null)}
+                className="btn-ghost py-2 text-xs"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedOrder(newOrderPopup);
+                  setActiveTab("orders");
+                  setNewOrderPopup(null);
+                }}
+                className="btn-primary py-2 text-xs"
+              >
+                Open in Orders Tab →
               </button>
             </div>
           </div>
