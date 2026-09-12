@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createHmac } from "crypto";
-import { getDb, FieldValue } from "./_lib.js";
+import { getDb, FieldValue, sendOrderEmails } from "./_lib.js";
+import type { OrderPayload } from "./_lib.js";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY ?? "";
 
@@ -24,7 +25,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const body = JSON.parse(rawBody) as {
     event: string;
-    data: { reference: string; amount: number };
+    data: {
+      reference: string;
+      amount: number;
+      channel?: string;
+      metadata?: { orderData?: OrderPayload };
+    };
   };
 
   if (body.event === "charge.success") {
@@ -40,6 +46,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: "paid",
         paidAt: FieldValue.serverTimestamp(),
       });
+    } else if (body.data.metadata?.orderData) {
+      const orderData = body.data.metadata.orderData;
+      const orderId = body.data.reference;
+      await db.collection("orders").doc(orderId).set({
+        ...orderData,
+        id: orderId,
+        reference: orderId,
+        status: "paid",
+        paystackChannel: body.data.channel,
+        createdAt: FieldValue.serverTimestamp(),
+        paidAt: FieldValue.serverTimestamp(),
+      });
+      sendOrderEmails({ ...orderData, id: orderId }).catch((err) =>
+        console.error("Webhook email dispatch failed:", err),
+      );
     }
   }
 

@@ -12,6 +12,7 @@ declare global {
         amount: number;
         currency?: string;
         ref?: string;
+        metadata?: Record<string, unknown>;
         callback: (response: { reference: string }) => void;
         onClose: () => void;
       }): { openIframe(): void };
@@ -542,6 +543,10 @@ export function CheckoutPage() {
           amount: Math.round(total * 100),
           currency: "NGN",
           ref,
+          metadata: {
+            referrer: typeof window !== "undefined" ? window.location.href : "",
+            orderData,
+          },
           // Paystack's SDK rejects async functions here ("Attribute callback
           // must be a valid function") — must be a plain function that
           // kicks off the async work itself, not one that returns a Promise.
