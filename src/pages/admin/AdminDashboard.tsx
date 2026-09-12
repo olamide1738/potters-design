@@ -29,6 +29,7 @@ import {
   importProductsToDb,
 } from "@/lib/products-db";
 import { subscribeToOrders, updateOrderStatus, updateOrderProductionStatus } from "@/lib/orders-db";
+import { triggerAdminAlertEmail } from "@/lib/orders";
 import { ProductForm } from "./ProductForm";
 import { ShippingRatesManager } from "./ShippingRatesManager";
 
@@ -109,6 +110,7 @@ export function AdminDashboard() {
             setNewOrderPopup(newlyArrived);
             playOrderChime();
             addToast(`🚨 NEW ORDER RECEIVED! Order #${newlyArrived.id} - ${formatPrice(newlyArrived.total)}`);
+            triggerAdminAlertEmail(newlyArrived);
           }
         }
         setOrders(list);

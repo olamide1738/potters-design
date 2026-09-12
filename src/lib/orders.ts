@@ -63,3 +63,11 @@ export async function verifyAndSavePaystackOrder(
 export async function saveBankOrder(orderData: OrderPayload): Promise<string> {
   return postOrder("/api/create-bank-order", { orderData });
 }
+
+export async function triggerAdminAlertEmail(orderData: unknown): Promise<void> {
+  try {
+    await postOrder("/api/send-admin-alert", { orderData });
+  } catch (err) {
+    console.error("Failed to trigger admin email alert from dashboard:", err);
+  }
+}
