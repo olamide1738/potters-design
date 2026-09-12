@@ -31,9 +31,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "Failed to save order" });
   }
 
-  sendOrderEmails({ ...orderData, id: orderId }).catch((err) =>
-    console.error("Email failed:", err),
-  );
+  try {
+    await sendOrderEmails({ ...orderData, id: orderId });
+  } catch (err) {
+    console.error("Email failed:", err);
+  }
 
   return res.status(200).json({ success: true, orderId });
 }

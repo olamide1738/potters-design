@@ -189,39 +189,39 @@ export async function sendOrderEmails(
 </table>
 </body></html>`;
 
-  // 1. Send Customer Receipt
-  resend.emails
+  const customerPromise = resend.emails
     .send({
       from: EMAIL_FROM,
       to: order.customer.email,
       subject: customerSubject,
       html: customerHtml,
     })
-    .catch((err) => {
+    .catch(async (err) => {
       console.warn("Customer email primary dispatch failed, falling back to registered account:", err);
-      resend.emails.send({
+      return resend.emails.send({
         from: EMAIL_FROM,
         to: "lammiejay02@gmail.com",
         subject: `[CUSTOMER COPY to ${order.customer.email}] ${customerSubject}`,
         html: customerHtml,
-      }).catch(() => {});
+      }).catch(() => null);
     });
 
-  // 2. Send Admin Order Notification directly to pottersdesigning@gmail.com (with lammiejay02@gmail.com fallback)
-  resend.emails
+  const adminPromise = resend.emails
     .send({
       from: EMAIL_FROM,
       to: STORE_EMAIL, // pottersdesigning@gmail.com
       subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
       html: adminHtml,
     })
-    .catch((err) => {
+    .catch(async (err) => {
       console.warn("Admin store email primary dispatch failed, falling back to registered account:", err);
-      resend.emails.send({
+      return resend.emails.send({
         from: EMAIL_FROM,
         to: "lammiejay02@gmail.com",
         subject: `[ADMIN FORWARD to ${STORE_EMAIL}] 🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
         html: adminHtml,
-      }).catch(() => {});
+      }).catch(() => null);
     });
+
+  await Promise.allSettled([customerPromise, adminPromise]);
 }
