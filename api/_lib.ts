@@ -197,9 +197,17 @@ export async function sendOrderEmails(
       subject: customerSubject,
       html: customerHtml,
     })
-    .catch((err) => console.error("Customer email dispatch notice:", err));
+    .catch((err) => {
+      console.warn("Customer email primary dispatch failed, falling back to registered account:", err);
+      resend.emails.send({
+        from: EMAIL_FROM,
+        to: "lammiejay02@gmail.com",
+        subject: `[CUSTOMER COPY to ${order.customer.email}] ${customerSubject}`,
+        html: customerHtml,
+      }).catch(() => {});
+    });
 
-  // 2. Send Admin Order Notification directly to pottersdesigning@gmail.com
+  // 2. Send Admin Order Notification directly to pottersdesigning@gmail.com (with lammiejay02@gmail.com fallback)
   resend.emails
     .send({
       from: EMAIL_FROM,
@@ -207,5 +215,13 @@ export async function sendOrderEmails(
       subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
       html: adminHtml,
     })
-    .catch((err) => console.error("Admin store email dispatch notice:", err));
+    .catch((err) => {
+      console.warn("Admin store email primary dispatch failed, falling back to registered account:", err);
+      resend.emails.send({
+        from: EMAIL_FROM,
+        to: "lammiejay02@gmail.com",
+        subject: `[ADMIN FORWARD to ${STORE_EMAIL}] 🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
+        html: adminHtml,
+      }).catch(() => {});
+    });
 }
