@@ -11,7 +11,7 @@ export function getDb() {
   return getFirestore();
 }
 export { FieldValue };
-export const resend = new Resend(process.env.RESEND_API_KEY ?? "");
+export const resend = new Resend(process.env.RESEND_API_KEY || "re_ednDy4D3_LfwTGRHxeqXeEAoYfG9H1epX");
 export const EMAIL_FROM = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
 export const STORE_EMAIL = process.env.STORE_EMAIL ?? "pottersdesigning@gmail.com";
 
@@ -189,13 +189,29 @@ export async function sendOrderEmails(
 </table>
 </body></html>`;
 
-  await Promise.all([
-    resend.emails.send({ from: EMAIL_FROM, to: order.customer.email, subject: customerSubject, html: customerHtml }),
-    resend.emails.send({
+  // Send Customer receipt (with fallback to lammiejay02@gmail.com if testing domain restricts)
+  try {
+    await resend.emails.send({ from: EMAIL_FROM, to: order.customer.email, subject: customerSubject, html: customerHtml });
+  } catch (err) {
+    console.warn("Customer email dispatch fallback:", err);
+    await resend.emails.send({ from: EMAIL_FROM, to: "lammiejay02@gmail.com", subject: customerSubject, html: customerHtml }).catch(() => {});
+  }
+
+  // Send Admin alert (with fallback to lammiejay02@gmail.com if testing domain restricts)
+  try {
+    await resend.emails.send({
       from: EMAIL_FROM,
       to: STORE_EMAIL,
       subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
       html: adminHtml,
-    }),
-  ]);
+    });
+  } catch (err) {
+    console.warn("Store admin email dispatch fallback:", err);
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: "lammiejay02@gmail.com",
+      subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
+      html: adminHtml,
+    }).catch(() => {});
+  }
 }
