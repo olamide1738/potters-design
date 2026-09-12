@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getDb, FieldValue, sendOrderEmails } from "./_lib.js";
+import { getDb, sendOrderEmails } from "./_lib.js";
 import type { OrderPayload } from "./_lib.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
