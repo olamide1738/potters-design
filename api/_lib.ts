@@ -189,29 +189,23 @@ export async function sendOrderEmails(
 </table>
 </body></html>`;
 
-  // Send Customer receipt (with fallback to lammiejay02@gmail.com if testing domain restricts)
-  try {
-    await resend.emails.send({ from: EMAIL_FROM, to: order.customer.email, subject: customerSubject, html: customerHtml });
-  } catch (err) {
-    console.warn("Customer email dispatch fallback:", err);
-    await resend.emails.send({ from: EMAIL_FROM, to: "lammiejay02@gmail.com", subject: customerSubject, html: customerHtml }).catch(() => {});
-  }
+  // 1. Send Customer Receipt
+  resend.emails
+    .send({
+      from: EMAIL_FROM,
+      to: order.customer.email,
+      subject: customerSubject,
+      html: customerHtml,
+    })
+    .catch((err) => console.error("Customer email dispatch notice:", err));
 
-  // Send Admin alert (with fallback to lammiejay02@gmail.com if testing domain restricts)
-  try {
-    await resend.emails.send({
+  // 2. Send Admin Order Notification directly to pottersdesigning@gmail.com
+  resend.emails
+    .send({
       from: EMAIL_FROM,
-      to: STORE_EMAIL,
+      to: STORE_EMAIL, // pottersdesigning@gmail.com
       subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
       html: adminHtml,
-    });
-  } catch (err) {
-    console.warn("Store admin email dispatch fallback:", err);
-    await resend.emails.send({
-      from: EMAIL_FROM,
-      to: "lammiejay02@gmail.com",
-      subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
-      html: adminHtml,
-    }).catch(() => {});
-  }
+    })
+    .catch((err) => console.error("Admin store email dispatch notice:", err));
 }
