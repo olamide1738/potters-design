@@ -23,6 +23,7 @@ export interface CartLine {
   image: string;
   size?: string;
   color?: string;
+  length?: string;
   quantity: number;
 }
 
@@ -54,7 +55,9 @@ export async function sendOrderEmails(
 ): Promise<void> {
   const customerName = `${order.customer.firstName} ${order.customer.lastName}`;
   const isBank = order.paymentMethod === "bank";
-  const subject = isBank
+  const adminDashboardUrl = process.env.ADMIN_URL ?? "https://pottersdesign.com/admin";
+
+  const customerSubject = isBank
     ? `Order received — ${order.id} | Potter's Design`
     : `Payment confirmed — ${order.id} | Potter's Design`;
 
@@ -62,13 +65,14 @@ export async function sendOrderEmails(
     .map(
       (line) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #eee">${line.name}${line.size ? ` · ${line.size}` : ""}${line.color ? ` · ${line.color}` : ""}<span style="color:#666"> × ${line.quantity}</span></td>
+          <td style="padding:8px 0;border-bottom:1px solid #eee">${line.name}${line.size ? ` · ${line.size}` : ""}${line.color ? ` · ${line.color}` : ""}${line.length ? ` · ${line.length}` : ""}<span style="color:#666"> × ${line.quantity}</span></td>
           <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-family:monospace">${formatNGN(line.unitPrice * line.quantity)}</td>
         </tr>`,
     )
     .join("");
 
-  const html = `<!DOCTYPE html>
+  // Customer email HTML
+  const customerHtml = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;color:#111">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0">
@@ -110,16 +114,88 @@ export async function sendOrderEmails(
 </table>
 </body></html>`;
 
+  // Admin store notification HTML
+  const adminHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;color:#111">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:30px 0">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;max-width:600px;width:100%;border:1px solid #e5e5e5;box-shadow:0 4px 12px rgba(0,0,0,0.05)">
+      <tr><td style="background:#111;padding:28px 32px;text-align:center">
+        <p style="margin:0;color:#d4af37;font-size:20px;font-weight:700;letter-spacing:0.06em">POTTER'S DESIGN ADMIN</p>
+        <p style="margin:6px 0 0;color:#fff;font-size:12px;opacity:0.8">New Customer Order Alert</p>
+      </td></tr>
+      <tr><td style="padding:32px">
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px 20px;margin:0 0 24px;text-align:center">
+          <p style="margin:0;font-size:18px;font-weight:700;color:#b45309">🚨 Somebody just placed a new order!</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#78350f">Order Ref: <strong>#${order.id}</strong></p>
+        </div>
+
+        <h3 style="margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:#d4af37">Customer Details</h3>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#f9f9f9;border-radius:8px;padding:14px">
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Name:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right">${customerName}</td></tr>
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Email:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right"><a href="mailto:${order.customer.email}" style="color:#d4af37">${order.customer.email}</a></td></tr>
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Phone:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right;font-family:monospace">${order.customer.phone}</td></tr>
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Payment Method:</td><td style="padding:4px 0;font-size:13px;font-weight:700;text-align:right;text-transform:uppercase">${order.paymentMethod} (${isBank ? "Pending Bank Transfer" : "Paid via Paystack"})</td></tr>
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Fulfillment:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right">${order.fulfillment === "pickup" ? "Store Pickup" : "Nationwide / International Delivery"}</td></tr>
+        </table>
+
+        <h3 style="margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:#d4af37">Items Ordered (${order.items.length})</h3>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px">
+          ${order.items
+            .map(
+              (line) => `
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:14px;font-weight:600">
+                ${line.name}
+                <div style="font-size:12px;color:#666;font-weight:normal;margin-top:2px">
+                  ${[line.size && `Size: ${line.size}`, line.color && `Color: ${line.color}`, line.length && `Length: ${line.length}`].filter(Boolean).join(" · ")}
+                </div>
+              </td>
+              <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;font-family:monospace;font-size:14px">
+                ${line.quantity} × ${formatNGN(line.unitPrice)}<br>
+                <strong>${formatNGN(line.unitPrice * line.quantity)}</strong>
+              </td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#f9f9f9;border-radius:8px;padding:14px">
+          <tr><td style="padding:4px 0;color:#555;font-size:13px">Subtotal</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:13px">${formatNGN(order.subtotal)}</td></tr>
+          <tr><td style="padding:4px 0;color:#555;font-size:13px">Shipping Fee</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:13px">${order.shippingFee === 0 ? "Free (pickup)" : formatNGN(order.shippingFee)}</td></tr>
+          <tr style="border-top:1.5px solid #ddd"><td style="padding:8px 0 0;font-weight:700;font-size:16px;color:#111">Total Order Value</td><td style="padding:8px 0 0;text-align:right;font-family:monospace;font-weight:700;font-size:18px;color:#d4af37">${formatNGN(order.total)}</td></tr>
+        </table>
+
+        ${order.orderNote ? `
+          <div style="background:#f4f4f4;border-left:3px solid #d4af37;padding:12px 16px;margin:0 0 24px;font-size:13px;color:#333">
+            <strong>Customer Note:</strong> "${order.orderNote}"
+          </div>
+        ` : ""}
+
+        <!-- Direct Admin Dashboard Link -->
+        <div style="text-align:center;margin:32px 0 10px">
+          <a href="${adminDashboardUrl}" target="_blank" style="background:#111;color:#d4af37;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block;border:1px solid #d4af37">
+            CONFIRM ORDER IN ADMIN DASHBOARD →
+          </a>
+        </div>
+      </td></tr>
+      <tr><td style="background:#f9f9f9;padding:20px;text-align:center;border-top:1px solid #eee">
+        <p style="margin:0;font-size:12px;color:#999">The Potter's Design Limited · Admin Notification</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+
   await Promise.all([
-    resend.emails.send({ from: EMAIL_FROM, to: order.customer.email, subject, html }),
+    resend.emails.send({ from: EMAIL_FROM, to: order.customer.email, subject: customerSubject, html: customerHtml }),
     resend.emails.send({
       from: EMAIL_FROM,
       to: STORE_EMAIL,
-      subject: `[NEW ORDER] ${order.id} — ${formatNGN(order.total)} — ${isBank ? "Bank transfer" : "Paystack"}`,
-      html: `<p>New order from <strong>${customerName}</strong> (${order.customer.email})</p>
-<p>Order ID: <strong>${order.id}</strong><br>Total: <strong>${formatNGN(order.total)}</strong><br>Payment: <strong>${isBank ? "Bank transfer (pending)" : "Paystack (paid)"}</strong><br>Fulfillment: <strong>${order.fulfillment}</strong></p>
-<p>Items:<br>${order.items.map((l) => `${l.name} × ${l.quantity}${l.size ? ` (${l.size})` : ""}`).join("<br>")}</p>
-${order.orderNote ? `<p>Customer note: <em>${order.orderNote}</em></p>` : ""}`,
+      subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
+      html: adminHtml,
     }),
   ]);
 }
