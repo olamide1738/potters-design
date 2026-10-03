@@ -3,7 +3,7 @@ import { createHmac } from "crypto";
 import { getDb, FieldValue, sendOrderEmails } from "./_lib.js";
 import type { OrderPayload } from "./_lib.js";
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY ?? "";
+const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || "sk_live_1a980e7291d6d00bee171624bf0dd071369e7adb";
 
 export const config = {
   api: { bodyParser: false },
@@ -42,10 +42,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .get();
 
     if (!snap.empty) {
-      await snap.docs[0].ref.update({
+      const docRef = snap.docs[0].ref;
+      const orderDocData = snap.docs[0].data() as OrderPayload & { id: string };
+      await docRef.update({
         status: "paid",
         paidAt: FieldValue.serverTimestamp(),
       });
+      try {
+        await sendOrderEmails({ ...orderDocData, id: snap.docs[0].id, paymentMethod: "paystack" });
+      } catch (err) {
+        console.error("Webhook email dispatch failed for existing doc:", err);
+      }
     } else if (body.data.metadata?.orderData) {
       const orderData = body.data.metadata.orderData;
       const orderId = body.data.reference;
@@ -58,9 +65,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         createdAt: FieldValue.serverTimestamp(),
         paidAt: FieldValue.serverTimestamp(),
       });
-      sendOrderEmails({ ...orderData, id: orderId }).catch((err) =>
-        console.error("Webhook email dispatch failed:", err),
-      );
+      try {
+        await sendOrderEmails({ ...orderData, id: orderId, paymentMethod: "paystack" });
+      } catch (err) {
+        console.error("Webhook email dispatch failed:", err);
+      }
     }
   }
 
