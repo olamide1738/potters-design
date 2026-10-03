@@ -9,6 +9,8 @@ export interface OrderPayload {
   shippingFee: number;
   total: number;
   weightKg: number;
+  expressProduction?: boolean;
+  expressProductionFee?: number;
   orderNote: string;
   paymentMethod: PaymentMethod;
 }

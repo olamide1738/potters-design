@@ -865,7 +865,14 @@ export function AdminDashboard() {
               <tbody>
                 {filteredOrders.map((order) => (
                   <tr key={order.id} className="border-b border-mist/60 last:border-0 dark:border-edge/60">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold">{order.id}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold">
+                      {order.id}
+                      {order.expressProduction && (
+                        <span className="ml-1.5 inline-flex items-center rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                          ⚡ Express
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs">
                       {order.createdAt.toLocaleDateString("en-NG", {
                         dateStyle: "medium",
@@ -1107,7 +1114,14 @@ export function AdminDashboard() {
               <tbody>
                 {logisticsOrders.map((order) => (
                   <tr key={order.id} className="border-b border-mist/60 last:border-0 dark:border-edge/60">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold">{order.id}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold">
+                      {order.id}
+                      {order.expressProduction && (
+                        <span className="ml-1.5 inline-flex items-center rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                          ⚡ Express
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <p className="font-semibold">{order.customer.firstName} {order.customer.lastName}</p>
                       <p className="text-xs text-ink/50 dark:text-bone/50">{order.customer.email}</p>
@@ -1290,6 +1304,12 @@ export function AdminDashboard() {
                       <span>Subtotal</span>
                       <span className="font-mono">{formatPrice(selectedOrder.subtotal)}</span>
                     </div>
+                    {selectedOrder.expressProduction && (
+                      <div className="flex justify-between font-semibold text-amber-600 dark:text-amber-400">
+                        <span>⚡ Express Production (3 Days)</span>
+                        <span className="font-mono">+{formatPrice(selectedOrder.expressProductionFee ?? 20000)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Shipping Fee</span>
                       <span className="font-mono">

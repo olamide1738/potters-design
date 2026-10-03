@@ -157,6 +157,9 @@ export function CheckoutPage() {
   const appliedDiscount = useStore((s) => s.appliedDiscount);
   const removeDiscount = useStore((s) => s.removeDiscount);
   const discountAmount = useStore((s) => s.cartDiscountAmount());
+  const expressProduction = useStore((s) => s.expressProduction);
+  const toggleExpressProduction = useStore((s) => s.toggleExpressProduction);
+  const [showExpressModal, setShowExpressModal] = useState(false);
   const navigate = useNavigate();
   const products = useProducts();
 
@@ -411,8 +414,9 @@ export function CheckoutPage() {
   );
 
   const shippingFee = isPickup ? 0 : isDomestic ? (domesticRate?.fee ?? null) : intlFee;
+  const expressProductionFee = expressProduction ? 20000 : 0;
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
-  const total = discountedSubtotal + (shippingFee ?? 0);
+  const total = discountedSubtotal + (shippingFee ?? 0) + expressProductionFee;
 
   // Verify that the email entered on checkout form is valid for 10% Welcome Discount
   useEffect(() => {
@@ -513,6 +517,8 @@ export function CheckoutPage() {
     items: cart,
     subtotal,
     shippingFee: shippingFee ?? 0,
+    expressProduction,
+    expressProductionFee: expressProduction ? 20000 : 0,
     total,
     weightKg,
     orderNote,
@@ -818,6 +824,70 @@ export function CheckoutPage() {
                 </div>
               </div>
             )}
+          </fieldset>
+
+          {/* Express Production Add-On */}
+          <fieldset className="mt-8">
+            <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink/50 dark:text-bone/50">
+              Production option
+            </legend>
+            <div
+              className={`relative rounded-card border p-4 transition-all ${
+                expressProduction
+                  ? "border-amber-500/80 bg-amber-500/5 dark:border-amber-500/80 dark:bg-amber-500/10 shadow-sm"
+                  : "border-mist hover:border-ink/30 dark:border-edge dark:hover:border-bone/30"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <label className="flex cursor-pointer items-start gap-3 flex-1">
+                  <input
+                    type="checkbox"
+                    checked={expressProduction}
+                    onChange={toggleExpressProduction}
+                    className="mt-1 h-4 w-4 rounded border-mist accent-gold dark:border-edge"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-ink dark:text-bone flex items-center gap-1">
+                        ⚡ 3-Day Express Production
+                      </span>
+                      <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                        Fast Track
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-ink/65 dark:text-bone/65 leading-relaxed">
+                      Prioritise creation of your pieces to be ready within 3 working days after payment.
+                    </p>
+                  </div>
+                </label>
+
+                <div className="text-right shrink-0">
+                  <span className="font-mono text-sm font-bold text-amber-700 dark:text-amber-400">
+                    +{convert(20000)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between border-t border-mist/40 pt-2.5 dark:border-edge/40">
+                <button
+                  type="button"
+                  onClick={() => setShowExpressModal(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gold hover:text-gold/80 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  <span>View Guidelines &amp; Important Details</span>
+                </button>
+                {expressProduction && (
+                  <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                    ✓ Added (+₦20,000)
+                  </span>
+                )}
+              </div>
+            </div>
           </fieldset>
 
           {/* Shipping address — hidden when pickup */}
@@ -1225,6 +1295,13 @@ export function CheckoutPage() {
               </div>
             )}
 
+            {expressProduction && (
+              <div className="flex items-center justify-between text-xs font-semibold text-amber-600 dark:text-amber-400">
+                <span>⚡ Express Production (3 Days)</span>
+                <span className="font-mono">+{convert(20000)}</span>
+              </div>
+            )}
+
             {/* Shipping line */}
             <div className="flex items-start justify-between text-ink/60 dark:text-bone/60">
               <span className="leading-snug">
@@ -1288,8 +1365,8 @@ export function CheckoutPage() {
               {isDomestic
                 ? form.state === "Lagos"
                   ? "Local delivery. Rate confirmed based on your selected zone."
-                  : "Via Zee Express. Remote location surcharge (₦2,700) may apply. Final rate confirmed at dispatch."
-                : "Via Zee Express. Excludes customs duties and other surcharges. Final rate confirmed at dispatch."}
+                  : "Via DHL. Remote location surcharge (₦2,700) may apply. Final rate confirmed at dispatch."
+                : "Via DHL. Excludes customs duties and other surcharges. Final rate confirmed at dispatch."}
             </p>
           )}
 
@@ -1301,6 +1378,97 @@ export function CheckoutPage() {
           </div>
         </aside>
       </form>
+
+      {/* Express Production Guidelines Modal */}
+      {showExpressModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-lg rounded-2xl border border-mist bg-bone p-6 shadow-2xl dark:border-edge dark:bg-carbon max-h-[90vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setShowExpressModal(false)}
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full text-ink/50 hover:bg-surface hover:text-ink dark:text-bone/50 dark:hover:bg-edge dark:hover:text-bone transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-amber-500/10 text-amber-600 text-xl font-bold">
+                ⚡
+              </span>
+              <div>
+                <h3 className="font-display text-lg font-bold text-ink dark:text-bone">
+                  3-Day Express Production Guidelines
+                </h3>
+                <p className="text-xs text-ink/60 dark:text-bone/60">
+                  Please review the key conditions for express order processing
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3.5 text-xs text-ink/80 dark:text-bone/80">
+              <div className="flex items-start gap-3 rounded-card border border-mist/60 bg-surface/50 p-3.5 dark:border-edge/60 dark:bg-edge/20">
+                <span className="text-base shrink-0">⚡</span>
+                <div>
+                  <p className="font-semibold text-ink dark:text-bone">1. Priority Production Only</p>
+                  <p className="mt-0.5 text-ink/65 dark:text-bone/65 leading-relaxed">
+                    This express surcharge (+₦20,000) covers expedited garment construction & production only. It does not include delivery or shipping charges.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-card border border-mist/60 bg-surface/50 p-3.5 dark:border-edge/60 dark:bg-edge/20">
+                <span className="text-base shrink-0">📅</span>
+                <div>
+                  <p className="font-semibold text-ink dark:text-bone">2. 3-Working-Day Timeline</p>
+                  <p className="mt-0.5 text-ink/65 dark:text-bone/65 leading-relaxed">
+                    The 3 working days timeline begins strictly after full payment confirmation and receipt of all required measurements and design options.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-card border border-mist/60 bg-surface/50 p-3.5 dark:border-edge/60 dark:bg-edge/20">
+                <span className="text-base shrink-0">👗</span>
+                <div>
+                  <p className="font-semibold text-ink dark:text-bone">3. Subject to Availability</p>
+                  <p className="mt-0.5 text-ink/65 dark:text-bone/65 leading-relaxed">
+                    Express production applies only to selected styles and fabrics that can be safely completed within the express timeframe.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-card border border-mist/60 bg-surface/50 p-3.5 dark:border-edge/60 dark:bg-edge/20">
+                <span className="text-base shrink-0">📍</span>
+                <div>
+                  <p className="font-semibold text-ink dark:text-bone">4. Delivery Time is Additional</p>
+                  <p className="mt-0.5 text-ink/65 dark:text-bone/65 leading-relaxed">
+                    Shipping / transit time is separate and depends on your chosen delivery method (e.g. Lagos local vs Interstate vs International shipping).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-card border border-mist/60 bg-surface/50 p-3.5 dark:border-edge/60 dark:bg-edge/20">
+                <span className="text-base shrink-0">💬</span>
+                <div>
+                  <p className="font-semibold text-ink dark:text-bone">5. Specific Date Requests</p>
+                  <p className="mt-0.5 text-ink/65 dark:text-bone/65 leading-relaxed">
+                    If you require delivery by a specific event date, please contact our team via WhatsApp (+234 701 737 7822) prior to placing your order.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowExpressModal(false)}
+                className="btn-primary w-full sm:w-auto"
+              >
+                Got it, close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

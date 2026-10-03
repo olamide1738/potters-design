@@ -34,6 +34,8 @@ export interface OrderPayload {
   items: CartLine[];
   subtotal: number;
   shippingFee: number;
+  expressProduction?: boolean;
+  expressProductionFee?: number;
   total: number;
   weightKg: number;
   orderNote: string;
@@ -93,6 +95,7 @@ export async function sendOrderEmails(
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
           <tr><td style="padding:6px 0;color:#555;font-size:14px">Subtotal</td><td style="padding:6px 0;text-align:right;font-family:monospace;font-size:14px">${formatNGN(order.subtotal)}</td></tr>
           <tr><td style="padding:6px 0;color:#555;font-size:14px">Shipping</td><td style="padding:6px 0;text-align:right;font-family:monospace;font-size:14px">${order.shippingFee === 0 ? "Free (pickup)" : formatNGN(order.shippingFee)}</td></tr>
+          ${order.expressProduction ? `<tr><td style="padding:6px 0;color:#b45309;font-weight:600;font-size:14px">⚡ Express Production (3 Days)</td><td style="padding:6px 0;text-align:right;font-family:monospace;font-weight:600;font-size:14px;color:#b45309">+${formatNGN(order.expressProductionFee ?? 20000)}</td></tr>` : ""}
           <tr style="border-top:2px solid #111"><td style="padding:10px 0 0;font-weight:700;font-size:16px">Total</td><td style="padding:10px 0 0;text-align:right;font-family:monospace;font-weight:700;font-size:16px">${formatNGN(order.total)}</td></tr>
         </table>
         ${isBank ? `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:20px;margin:0 0 24px">
@@ -165,6 +168,7 @@ export async function sendOrderEmails(
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#f9f9f9;border-radius:8px;padding:14px">
           <tr><td style="padding:4px 0;color:#555;font-size:13px">Subtotal</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:13px">${formatNGN(order.subtotal)}</td></tr>
           <tr><td style="padding:4px 0;color:#555;font-size:13px">Shipping Fee</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:13px">${order.shippingFee === 0 ? "Free (pickup)" : formatNGN(order.shippingFee)}</td></tr>
+          ${order.expressProduction ? `<tr><td style="padding:4px 0;color:#b45309;font-weight:700;font-size:13px">⚡ Express Production (3 Days)</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-weight:700;font-size:13px;color:#b45309">+${formatNGN(order.expressProductionFee ?? 20000)}</td></tr>` : ""}
           <tr style="border-top:1.5px solid #ddd"><td style="padding:8px 0 0;font-weight:700;font-size:16px;color:#111">Total Order Value</td><td style="padding:8px 0 0;text-align:right;font-family:monospace;font-weight:700;font-size:18px;color:#d4af37">${formatNGN(order.total)}</td></tr>
         </table>
 

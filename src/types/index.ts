@@ -134,6 +134,8 @@ export interface Order {
   shippingFee: number;
   total: number;
   weightKg: number;
+  expressProduction?: boolean;
+  expressProductionFee?: number;
   orderNote: string;
   createdAt: Date;
   paidAt?: Date;

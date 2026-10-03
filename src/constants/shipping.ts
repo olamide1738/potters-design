@@ -1,4 +1,4 @@
-// Zee Express / DHL Export Rate Card
+// DHL Export Rate Card
 // Zones are fixed per country for all weights from 0 to 30 kg.
 
 export interface ShippingCountry {
@@ -318,7 +318,7 @@ function ceilToRateStep(kg: number): number {
 
 /**
  * Returns shipping cost in NGN, or null if domestic / country not in rate card.
- * Uses the DHL / Zee Express zone rate card (fixed zone per country from 0 to 30 kg).
+ * Uses the DHL zone rate card (fixed zone per country from 0 to 30 kg).
  * Decimal weights are rounded up to the next integer kg (e.g. 2.1 kg -> 3 kg).
  */
 export function getShippingRate(countryCode: string, weightKg: number): number | null {
@@ -339,10 +339,10 @@ export function getZoneName(countryCode: string, _weightKg?: number): string | n
   return `Zone ${country.zone}`;
 }
 
-// ── DOMESTIC NIGERIA — Zee Express Nov 2025 Rate Card ──────────────────────────
+// ── DOMESTIC NIGERIA — DHL Rate Card ──────────────────────────
 
 // ── Express service (1–3 working days) · City-based · Zones 1–3 ──────────────
-// Rates per Zee Express Nationwide Delivery (1-3 days) table, all NGN.
+// Rates per DHL Nationwide Delivery (1-3 days) table, all NGN.
 // Weight steps: 0.5 kg increments from 0.5 to 20 kg.
 // Row format: [weightKg, zone1, zone2, zone3]
 const DOMESTIC_EXPRESS_RATES: [number, number, number, number][] = [

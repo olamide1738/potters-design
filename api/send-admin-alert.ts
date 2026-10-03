@@ -73,6 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#f9f9f9;border-radius:8px;padding:14px">
           <tr><td style="padding:4px 0;color:#555;font-size:13px">Subtotal</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:13px">${formatNGN(order.subtotal || 0)}</td></tr>
           <tr><td style="padding:4px 0;color:#555;font-size:13px">Shipping Fee</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:13px">${order.shippingFee === 0 ? "Free (pickup)" : formatNGN(order.shippingFee || 0)}</td></tr>
+          ${order.expressProduction ? `<tr><td style="padding:4px 0;color:#b45309;font-weight:700;font-size:13px">⚡ Express Production (3 Days)</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-weight:700;font-size:13px;color:#b45309">+${formatNGN(order.expressProductionFee ?? 20000)}</td></tr>` : ""}
           <tr style="border-top:1.5px solid #ddd"><td style="padding:8px 0 0;font-weight:700;font-size:16px;color:#111">Total Order Value</td><td style="padding:8px 0 0;text-align:right;font-family:monospace;font-weight:700;font-size:18px;color:#d4af37">${formatNGN(order.total || 0)}</td></tr>
         </table>
 

@@ -14,11 +14,15 @@ interface StoreState {
   wishlist: number[];
   compare: number[];
   appliedDiscount: AppliedDiscount | null;
+  expressProduction: boolean;
 
   addToCart: (product: Product, opts?: { size?: string; color?: string; length?: string; quantity?: number }) => void;
   removeFromCart: (productId: number, size?: string, color?: string, length?: string) => void;
   setQuantity: (productId: number, quantity: number, size?: string, color?: string, length?: string) => void;
   clearCart: () => void;
+
+  setExpressProduction: (val: boolean) => void;
+  toggleExpressProduction: () => void;
 
   toggleWishlist: (productId: number) => void;
   toggleCompare: (productId: number) => void;
@@ -41,6 +45,7 @@ export const useStore = create<StoreState>()(
       wishlist: [],
       compare: [],
       appliedDiscount: null,
+      expressProduction: false,
 
       addToCart: (product, opts = {}) =>
         set((state) => {
@@ -114,7 +119,10 @@ export const useStore = create<StoreState>()(
             .filter((l) => l.quantity > 0),
         })),
 
-      clearCart: () => set({ cart: [] }),
+      clearCart: () => set({ cart: [], expressProduction: false }),
+
+      setExpressProduction: (val: boolean) => set({ expressProduction: val }),
+      toggleExpressProduction: () => set((state) => ({ expressProduction: !state.expressProduction })),
 
       toggleWishlist: (productId) =>
         set((state) => ({
