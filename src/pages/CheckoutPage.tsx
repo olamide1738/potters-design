@@ -744,7 +744,7 @@ export function CheckoutPage() {
                 </div>
               </div>
             )}
-            {fulfillment === "delivery" && isDomestic && (
+            {fulfillment === "delivery" && isDomestic && form.state !== "Lagos" && form.state !== "Lagos State" && (
               <div className="mt-5 space-y-3 rounded-card border border-mist/80 bg-surface/30 p-4 dark:border-edge/80 dark:bg-edge/10">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-ink/70 dark:text-bone/70">
