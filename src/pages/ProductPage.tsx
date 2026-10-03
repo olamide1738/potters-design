@@ -241,13 +241,23 @@ export function ProductPage() {
   };
 
   const handleShare = async () => {
+    if (!product) return;
+
+    const isDev =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+    const origin = isDev ? window.location.origin : "https://pottersdesign.com";
+    const shareUrl = `${origin}/shop/${product.slug}`;
+
     const shareData = {
       title: `Potter's Design — ${product.name}`,
       text:
         product.description?.split("\n\n")[0] ??
         `Check out ${product.name} from Potter's Design`,
-      url: window.location.href,
+      url: shareUrl,
     };
+
     if (navigator.share) {
       try {
         await navigator.share(shareData);
@@ -256,8 +266,8 @@ export function ProductPage() {
       }
     } else {
       try {
-        await navigator.clipboard.writeText(window.location.href);
-        addToast("Link copied to clipboard");
+        await navigator.clipboard.writeText(shareUrl);
+        addToast("Product link copied to clipboard");
       } catch {
         addToast("Copy the URL from your address bar to share");
       }

@@ -58,7 +58,13 @@ export const useProductStore = create<ProductStoreState>((set) => {
 export const useProducts = () => useProductStore((s) => s.products);
 
 export function useProductBySlug(slug: string | undefined): Product | undefined {
+  if (!slug) return undefined;
+  const normalized = slug.trim().toLowerCase();
   return useProductStore((s) =>
-    slug ? s.products.find((p) => p.slug === slug) : undefined,
+    s.products.find(
+      (p) =>
+        p.slug.toLowerCase() === normalized ||
+        String(p.id) === normalized,
+    ),
   );
 }
