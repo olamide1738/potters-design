@@ -9,6 +9,8 @@ export function CartPage() {
   const setQuantity = useStore((s) => s.setQuantity);
   const removeFromCart = useStore((s) => s.removeFromCart);
   const subtotal = useStore((s) => s.cartSubtotal());
+  const cartExpressProductionFee = useStore((s) => s.cartExpressProductionFee());
+  const toggleCartLineExpressProduction = useStore((s) => s.toggleCartLineExpressProduction);
   const [agreed, setAgreed] = useState(false);
   const navigate = useNavigate();
   const products = useProducts();
@@ -58,9 +60,9 @@ export function CartPage() {
 
         {/* Cart lines */}
         <ul className="divide-y divide-mist dark:divide-edge">
-          {cart.map((line) => (
+          {cart.map((line, idx) => (
             <li
-              key={`${line.productId}-${line.size}-${line.color}-${line.length}`}
+              key={`${line.productId}-${line.size}-${line.color}-${line.length}-${line.expressProduction ? "exp" : "std"}`}
               className="flex gap-4 py-5"
             >
               <Link to={`/shop/${line.slug}`} className="shrink-0">
@@ -85,6 +87,15 @@ export function CartPage() {
                         {[line.size, line.color, line.length].filter(Boolean).join(" / ")}
                       </p>
                     )}
+                    <label className="mt-1.5 flex items-center gap-1.5 cursor-pointer text-xs text-ink/75 dark:text-bone/75 hover:text-gold">
+                      <input
+                        type="checkbox"
+                        checked={!!line.expressProduction}
+                        onChange={() => toggleCartLineExpressProduction(idx)}
+                        className="h-3.5 w-3.5 rounded border-mist accent-gold dark:border-edge"
+                      />
+                      <span className="font-medium">⚡ Express Production (3 Days): +₦20k</span>
+                    </label>
                     <p className="mt-1.5 text-sm font-semibold">
                       {formatPrice(line.unitPrice)}
                     </p>
@@ -172,11 +183,21 @@ export function CartPage() {
         )}
 
         {/* Subtotal */}
-        <div className="mt-6 border-t border-mist pt-5 dark:border-edge">
+        <div className="mt-6 border-t border-mist pt-5 dark:border-edge space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-base font-semibold">Subtotal</span>
+            <span className="text-sm text-ink/70 dark:text-bone/70">Subtotal</span>
+            <span className="font-mono text-sm">{formatPrice(subtotal)}</span>
+          </div>
+          {cartExpressProductionFee > 0 && (
+            <div className="flex items-center justify-between text-xs font-semibold text-amber-600 dark:text-amber-400">
+              <span>⚡ Express Production Fee</span>
+              <span className="font-mono">+{formatPrice(cartExpressProductionFee)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-2 border-t border-mist/40 dark:border-edge/40">
+            <span className="text-base font-semibold">Estimated Total</span>
             <span className="font-mono text-base font-semibold text-gold">
-              {formatPrice(subtotal)}
+              {formatPrice(subtotal + cartExpressProductionFee)}
             </span>
           </div>
           <p className="mt-1 text-xs text-ink/50 dark:text-bone/50">

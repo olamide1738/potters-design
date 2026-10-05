@@ -59,6 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <div style="font-size:12px;color:#666;font-weight:normal;margin-top:2px">
                   ${[line.size && `Size: ${line.size}`, line.color && `Color: ${line.color}`, line.length && `Length: ${line.length}`].filter(Boolean).join(" · ")}
                 </div>
+                ${line.expressProduction ? `<div style="color:#b45309;font-weight:600;font-size:12px;margin-top:2px">⚡ 3-Day Express Production (+${formatNGN(20000 * line.quantity)})</div>` : ""}
               </td>
               <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;font-family:monospace;font-size:14px">
                 ${line.quantity} × ${formatNGN(line.unitPrice)}<br>

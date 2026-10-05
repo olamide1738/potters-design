@@ -1285,8 +1285,13 @@ export function AdminDashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">{item.name}</p>
                           <p className="text-xs text-ink/50 dark:text-bone/50 mt-0.5">
-                            {item.size && `Size: ${item.size}`} {item.color && `· Color: ${item.color}`}
+                            {item.size && `Size: ${item.size}`} {item.color && `· Color: ${item.color}`} {item.length && `· Length: ${item.length}`}
                           </p>
+                          {item.expressProduction && (
+                            <span className="inline-block mt-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                              ⚡ 3-Day Express (+{formatPrice(20000 * item.quantity)})
+                            </span>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="font-mono text-xs font-semibold">{formatPrice(item.unitPrice * item.quantity)}</p>

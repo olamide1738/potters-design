@@ -38,7 +38,9 @@ export function CartDrawer() {
   const appliedDiscount = useStore((s) => s.appliedDiscount);
   const removeDiscount = useStore((s) => s.removeDiscount);
   const discountAmount = useStore((s) => s.cartDiscountAmount());
-  const finalSubtotal = Math.max(0, subtotal - discountAmount);
+  const cartExpressProductionFee = useStore((s) => s.cartExpressProductionFee());
+  const toggleCartLineExpressProduction = useStore((s) => s.toggleCartLineExpressProduction);
+  const finalSubtotal = Math.max(0, subtotal - discountAmount) + cartExpressProductionFee;
 
   return (
     <>
@@ -90,9 +92,9 @@ export function CartDrawer() {
           ) : (
             <div className="px-6">
               <ul className="divide-y divide-mist dark:divide-edge">
-                {cart.map((line) => (
+                {cart.map((line, idx) => (
                   <li
-                    key={`${line.productId}-${line.size}-${line.color}-${line.length}`}
+                    key={`${line.productId}-${line.size}-${line.color}-${line.length}-${line.expressProduction ? "exp" : "std"}`}
                     className="flex gap-4 py-5"
                   >
                     <Link
@@ -125,6 +127,15 @@ export function CartDrawer() {
                               {[line.size, line.color, line.length].filter(Boolean).join(" / ")}
                             </p>
                           )}
+                          <label className="mt-1.5 flex items-center gap-1.5 cursor-pointer text-[11px] text-ink/75 dark:text-bone/75 hover:text-gold">
+                            <input
+                              type="checkbox"
+                              checked={!!line.expressProduction}
+                              onChange={() => toggleCartLineExpressProduction(idx)}
+                              className="h-3.5 w-3.5 rounded border-mist accent-gold dark:border-edge"
+                            />
+                            <span className="font-medium">⚡ Express (3 Days): +₦20k</span>
+                          </label>
                         </div>
                         <p className="font-mono text-sm font-semibold">
                           {formatPrice(line.unitPrice * line.quantity)}
@@ -240,6 +251,13 @@ export function CartDrawer() {
                     </button>
                   </div>
                   <span className="font-mono font-semibold">-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
+
+              {cartExpressProductionFee > 0 && (
+                <div className="flex items-center justify-between text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  <span>⚡ Express Production Fee</span>
+                  <span className="font-mono">+{formatPrice(cartExpressProductionFee)}</span>
                 </div>
               )}
 

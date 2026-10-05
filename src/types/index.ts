@@ -77,6 +77,7 @@ export interface CartLine {
   color?: string;
   length?: string;
   quantity: number;
+  expressProduction?: boolean;
 }
 
 export interface ShopFilterState {

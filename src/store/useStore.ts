@@ -14,15 +14,14 @@ interface StoreState {
   wishlist: number[];
   compare: number[];
   appliedDiscount: AppliedDiscount | null;
-  expressProduction: boolean;
 
-  addToCart: (product: Product, opts?: { size?: string; color?: string; length?: string; quantity?: number }) => void;
+  addToCart: (product: Product, opts?: { size?: string; color?: string; length?: string; quantity?: number; expressProduction?: boolean }) => void;
   removeFromCart: (productId: number, size?: string, color?: string, length?: string) => void;
   setQuantity: (productId: number, quantity: number, size?: string, color?: string, length?: string) => void;
   clearCart: () => void;
 
-  setExpressProduction: (val: boolean) => void;
-  toggleExpressProduction: () => void;
+  toggleCartLineExpressProduction: (index: number) => void;
+  setCartLineExpressProduction: (index: number, val: boolean) => void;
 
   toggleWishlist: (productId: number) => void;
   toggleCompare: (productId: number) => void;
@@ -32,6 +31,7 @@ interface StoreState {
 
   cartCount: () => number;
   cartSubtotal: () => number;
+  cartExpressProductionFee: () => number;
   cartDiscountAmount: () => number;
 }
 
@@ -45,16 +45,17 @@ export const useStore = create<StoreState>()(
       wishlist: [],
       compare: [],
       appliedDiscount: null,
-      expressProduction: false,
 
       addToCart: (product, opts = {}) =>
         set((state) => {
-          const { size, color, length, quantity = 1 } = opts;
-          const existing = state.cart.find((l) => sameLine(l, product.id, size, color, length));
+          const { size, color, length, quantity = 1, expressProduction = false } = opts;
+          const existing = state.cart.find(
+            (l) => sameLine(l, product.id, size, color, length) && !!l.expressProduction === !!expressProduction
+          );
           if (existing) {
             return {
               cart: state.cart.map((l) =>
-                sameLine(l, product.id, size, color, length)
+                sameLine(l, product.id, size, color, length) && !!l.expressProduction === !!expressProduction
                   ? { ...l, quantity: l.quantity + quantity }
                   : l,
               ),
@@ -99,6 +100,7 @@ export const useStore = create<StoreState>()(
             color,
             length,
             quantity,
+            expressProduction: expressProduction ? true : undefined,
           };
           return { cart: [...state.cart, line] };
         }),
@@ -119,10 +121,21 @@ export const useStore = create<StoreState>()(
             .filter((l) => l.quantity > 0),
         })),
 
-      clearCart: () => set({ cart: [], expressProduction: false }),
+      clearCart: () => set({ cart: [] }),
 
-      setExpressProduction: (val: boolean) => set({ expressProduction: val }),
-      toggleExpressProduction: () => set((state) => ({ expressProduction: !state.expressProduction })),
+      toggleCartLineExpressProduction: (index: number) =>
+        set((state) => ({
+          cart: state.cart.map((line, i) =>
+            i === index ? { ...line, expressProduction: !line.expressProduction } : line,
+          ),
+        })),
+
+      setCartLineExpressProduction: (index: number, val: boolean) =>
+        set((state) => ({
+          cart: state.cart.map((line, i) =>
+            i === index ? { ...line, expressProduction: val } : line,
+          ),
+        })),
 
       toggleWishlist: (productId) =>
         set((state) => ({
@@ -143,6 +156,8 @@ export const useStore = create<StoreState>()(
 
       cartCount: () => get().cart.reduce((n, l) => n + l.quantity, 0),
       cartSubtotal: () => get().cart.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0),
+      cartExpressProductionFee: () =>
+        get().cart.reduce((sum, l) => sum + (l.expressProduction ? 20000 * l.quantity : 0), 0),
       cartDiscountAmount: () => {
         const sub = get().cartSubtotal();
         const disc = get().appliedDiscount;

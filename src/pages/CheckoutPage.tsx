@@ -157,8 +157,8 @@ export function CheckoutPage() {
   const appliedDiscount = useStore((s) => s.appliedDiscount);
   const removeDiscount = useStore((s) => s.removeDiscount);
   const discountAmount = useStore((s) => s.cartDiscountAmount());
-  const expressProduction = useStore((s) => s.expressProduction);
-  const toggleExpressProduction = useStore((s) => s.toggleExpressProduction);
+  const expressProductionFee = useStore((s) => s.cartExpressProductionFee());
+  const toggleCartLineExpressProduction = useStore((s) => s.toggleCartLineExpressProduction);
   const [showExpressModal, setShowExpressModal] = useState(false);
   const navigate = useNavigate();
   const products = useProducts();
@@ -414,7 +414,6 @@ export function CheckoutPage() {
   );
 
   const shippingFee = isPickup ? 0 : isDomestic ? (domesticRate?.fee ?? null) : intlFee;
-  const expressProductionFee = expressProduction ? 20000 : 0;
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const total = discountedSubtotal + (shippingFee ?? 0) + expressProductionFee;
 
@@ -517,8 +516,8 @@ export function CheckoutPage() {
     items: cart,
     subtotal,
     shippingFee: shippingFee ?? 0,
-    expressProduction,
-    expressProductionFee: expressProduction ? 20000 : 0,
+    expressProduction: expressProductionFee > 0,
+    expressProductionFee,
     total,
     weightKg,
     orderNote,
@@ -826,46 +825,40 @@ export function CheckoutPage() {
             )}
           </fieldset>
 
-          {/* Express Production Add-On */}
+          {/* Express Production Options (Per Product) */}
           <fieldset className="mt-8">
             <legend className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink/50 dark:text-bone/50">
-              Production option
+              Express Production Options
             </legend>
-            <div
-              className={`relative rounded-card border p-4 transition-all ${
-                expressProduction
-                  ? "border-amber-500/80 bg-amber-500/5 dark:border-amber-500/80 dark:bg-amber-500/10 shadow-sm"
-                  : "border-mist hover:border-ink/30 dark:border-edge dark:hover:border-bone/30"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <label className="flex cursor-pointer items-start gap-3 flex-1">
-                  <input
-                    type="checkbox"
-                    checked={expressProduction}
-                    onChange={toggleExpressProduction}
-                    className="mt-1 h-4 w-4 rounded border-mist accent-gold dark:border-edge"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-ink dark:text-bone flex items-center gap-1">
-                        ⚡ 3-Day Express Production
-                      </span>
-                      <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                        Fast Track
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-ink/65 dark:text-bone/65 leading-relaxed">
-                      Prioritise creation of your pieces to be ready within 3 working days after payment.
-                    </p>
-                  </div>
-                </label>
+            <div className="rounded-card border border-mist p-4 dark:border-edge bg-surface/30 dark:bg-edge/10">
+              <p className="text-xs text-ink/65 dark:text-bone/65 leading-relaxed mb-3">
+                Fast-track creation of individual pieces to be ready within 3 working days (+₦20,000 per item).
+              </p>
 
-                <div className="text-right shrink-0">
-                  <span className="font-mono text-sm font-bold text-amber-700 dark:text-amber-400">
-                    +{convert(20000)}
-                  </span>
-                </div>
+              <div className="divide-y divide-mist/50 dark:divide-edge/50">
+                {cart.map((line, idx) => (
+                  <div key={`${line.productId}-${line.size}-${line.color}-${line.length}-${idx}`} className="flex items-center justify-between py-2.5">
+                    <label className="flex items-center gap-3 cursor-pointer flex-1">
+                      <input
+                        type="checkbox"
+                        checked={!!line.expressProduction}
+                        onChange={() => toggleCartLineExpressProduction(idx)}
+                        className="h-4 w-4 rounded border-mist accent-gold dark:border-edge"
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-ink dark:text-bone">{line.name}</p>
+                        {(line.size || line.color || line.length) && (
+                          <p className="text-[11px] text-ink/50 dark:text-bone/50">
+                            {[line.size, line.color, line.length].filter(Boolean).join(" / ")}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                    <span className="font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
+                      {line.expressProduction ? `+${convert(20000 * line.quantity)}` : "+₦0"}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-mist/40 pt-2.5 dark:border-edge/40">
@@ -881,9 +874,9 @@ export function CheckoutPage() {
                   </svg>
                   <span>View Guidelines &amp; Important Details</span>
                 </button>
-                {expressProduction && (
+                {expressProductionFee > 0 && (
                   <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                    ✓ Added (+₦20,000)
+                    Total Express: +{convert(expressProductionFee)}
                   </span>
                 )}
               </div>
@@ -1247,7 +1240,7 @@ export function CheckoutPage() {
           <ul className="mt-5 divide-y divide-mist dark:divide-edge">
             {cart.map((line) => (
               <li
-                key={`${line.productId}-${line.size}-${line.color}-${line.length}`}
+                key={`${line.productId}-${line.size}-${line.color}-${line.length}-${line.expressProduction ? "exp" : "std"}`}
                 className="flex items-start gap-3 py-4"
               >
                 <div className="relative shrink-0">
@@ -1263,6 +1256,11 @@ export function CheckoutPage() {
                 <div className="flex flex-1 justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium leading-snug">{line.name}</p>
+                    {line.expressProduction && (
+                      <span className="inline-block mt-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                        ⚡ 3-Day Express (+{convert(20000 * line.quantity)})
+                      </span>
+                    )}
                   </div>
                   <p className="shrink-0 font-mono text-sm font-semibold">
                     {convert(line.unitPrice * line.quantity)}
@@ -1295,10 +1293,10 @@ export function CheckoutPage() {
               </div>
             )}
 
-            {expressProduction && (
+            {expressProductionFee > 0 && (
               <div className="flex items-center justify-between text-xs font-semibold text-amber-600 dark:text-amber-400">
-                <span>⚡ Express Production (3 Days)</span>
-                <span className="font-mono">+{convert(20000)}</span>
+                <span>⚡ Express Production Fee</span>
+                <span className="font-mono">+{convert(expressProductionFee)}</span>
               </div>
             )}
 

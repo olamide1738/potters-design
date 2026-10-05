@@ -233,9 +233,11 @@ export function ProductPage() {
     (p) => p.category === product.category && p.id !== product.id,
   ).slice(0, 4);
 
+  const [expressProduction, setExpressProduction] = useState(false);
+
   const handleAdd = () => {
     setAdding(true);
-    addToCart(product, { size, color, length, quantity: qty });
+    addToCart(product, { size, color, length, quantity: qty, expressProduction });
     addToast("Added to cart");
     setTimeout(() => setAdding(false), 700);
   };
@@ -558,6 +560,31 @@ export function ProductPage() {
               — fits most.
             </p>
           )}
+
+          {/* Express Production Option */}
+          <div className="mt-6 rounded-card border border-amber-500/40 bg-amber-500/5 p-3.5 dark:border-amber-500/40 dark:bg-amber-500/10">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={expressProduction}
+                onChange={(e) => setExpressProduction(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-mist accent-gold dark:border-edge"
+              />
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-ink dark:text-bone flex items-center gap-1">
+                    ⚡ 3-Day Express Production
+                  </span>
+                  <span className="font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
+                    +₦20,000 / item
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[11px] text-ink/60 dark:text-bone/60 leading-tight">
+                  Fast-track creation of this piece to be ready within 3 working days after payment.
+                </p>
+              </div>
+            </label>
+          </div>
 
           {/* Qty + Add to cart */}
           <div className="mt-8 flex items-center gap-4">
