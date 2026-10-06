@@ -187,15 +187,30 @@ export const onOrderCreated = onDocumentCreated("orders/{orderId}", async (event
     ? `Order received — ${order.id} | Potter's Design`
     : `Payment confirmed — ${order.id} | Potter's Design`;
 
+  const fulfillmentDetailsHtml =
+    order.fulfillment === "pickup"
+      ? `<div style="background:#fdf8f0;border:1px solid #fae8cb;border-radius:8px;padding:14px 16px;margin:0 0 20px">
+          <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#c8852b;text-transform:uppercase;letter-spacing:0.05em">Fulfillment Method</p>
+          <p style="margin:0;font-size:14px;font-weight:600;color:#111">Store Pickup</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#555">No 4, Akinsanmi Street, Obanikoro Estate, Mainland Lagos, Nigeria</p>
+        </div>`
+      : order.shippingAddress
+      ? `<div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:14px 16px;margin:0 0 20px">
+          <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em">Delivery Address</p>
+          <p style="margin:0;font-size:14px;font-weight:600;color:#111">${order.shippingAddress.address}</p>
+          <p style="margin:3px 0 0;font-size:13px;color:#555">${order.shippingAddress.city}, ${order.shippingAddress.state}, ${order.shippingAddress.countryCode} ${order.shippingAddress.zip ? `· ${order.shippingAddress.zip}` : ""}</p>
+        </div>`
+      : "";
+
   const itemsHtml = order.items
     .map(
       (line) => `
       <tr>
-        <td style="padding:8px 0;border-bottom:1px solid #eee">
-          ${line.name}${line.size ? ` · ${line.size}` : ""}${line.color ? ` · ${line.color}` : ""}
-          <span style="color:#666"> × ${line.quantity}</span>
+        <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:14px">
+          <strong>${line.name}</strong>${line.size ? ` · Size: ${line.size}` : ""}${line.color ? ` · Color: ${line.color}` : ""}
+          <div style="font-size:12px;color:#666;margin-top:2px">Qty: ${line.quantity} × ${formatNGN(line.unitPrice)}</div>
         </td>
-        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-family:monospace">
+        <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;font-family:monospace;font-size:14px;font-weight:600">
           ${formatNGN(line.unitPrice * line.quantity)}
         </td>
       </tr>`,
@@ -209,48 +224,58 @@ export const onOrderCreated = onDocumentCreated("orders/{orderId}", async (event
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;color:#111">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0">
   <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:600px;width:100%">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:600px;width:100%;border:1px solid #e0e0e0">
 
       <!-- Header -->
       <tr>
-        <td style="background:#111;padding:32px 40px;text-align:center">
-          <p style="margin:0;color:#d4af37;font-size:22px;font-weight:600;letter-spacing:0.04em">POTTER'S DESIGN</p>
-          <p style="margin:8px 0 0;color:#fff;font-size:13px;opacity:0.7">Heritage. Reimagined.</p>
+        <td style="background:#16130f;padding:32px 40px;text-align:center">
+          <p style="margin:0;color:#c8852b;font-size:22px;font-weight:700;letter-spacing:0.04em">POTTER'S DESIGN</p>
+          <p style="margin:8px 0 0;color:#fff;font-size:13px;opacity:0.75">Heritage. Reimagined.</p>
         </td>
       </tr>
 
       <!-- Body -->
       <tr>
-        <td style="padding:40px">
-          <h1 style="margin:0 0 8px;font-size:24px;font-weight:700">${isBank ? "Order received" : "Payment confirmed"} 🎉</h1>
-          <p style="margin:0 0 24px;color:#555;font-size:15px">Hi ${customerName}, ${isBank
+        <td style="padding:36px 40px">
+          <h1 style="margin:0 0 8px;font-size:24px;font-weight:700">${isBank ? "Order Received" : "Payment Confirmed"} 🎉</h1>
+          <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6">Hi ${customerName}, ${isBank
     ? "your order has been saved. Please complete your bank transfer to begin production."
     : "your payment was successful. We'll begin crafting your order right away."}</p>
 
           <!-- Order ref -->
-          <div style="background:#f9f9f9;border-radius:8px;padding:16px 20px;margin:0 0 24px">
-            <p style="margin:0 0 4px;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.1em">Order reference</p>
-            <p style="margin:0;font-size:20px;font-weight:700;font-family:monospace;color:#111">${order.id}</p>
+          <div style="background:#fbf9f6;border:1px solid #ebdcc6;border-radius:8px;padding:16px 20px;margin:0 0 24px">
+            <p style="margin:0 0 4px;font-size:11px;color:#8c7853;text-transform:uppercase;letter-spacing:0.1em;font-weight:700">Order Reference</p>
+            <p style="margin:0;font-size:20px;font-weight:700;font-family:monospace;color:#16130f">${order.id}</p>
           </div>
 
+          <!-- Customer details -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:#f9f9f9;border-radius:8px;padding:14px 16px;font-size:13px">
+            <tr><td style="padding:3px 0;color:#666">Customer:</td><td style="padding:3px 0;font-weight:600;text-align:right">${customerName}</td></tr>
+            <tr><td style="padding:3px 0;color:#666">Email:</td><td style="padding:3px 0;font-weight:600;text-align:right">${order.customer.email}</td></tr>
+            <tr><td style="padding:3px 0;color:#666">Phone:</td><td style="padding:3px 0;font-weight:600;font-family:monospace;text-align:right">${order.customer.phone}</td></tr>
+          </table>
+
+          ${fulfillmentDetailsHtml}
+
           <!-- Items -->
+          <h3 style="margin:20px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;color:#c8852b">Ordered Items (${order.items.length})</h3>
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">
             ${itemsHtml}
           </table>
 
           <!-- Totals -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#fbf9f6;border-radius:8px;padding:16px">
             <tr>
               <td style="padding:6px 0;color:#555;font-size:14px">Subtotal</td>
               <td style="padding:6px 0;text-align:right;font-family:monospace;font-size:14px">${formatNGN(order.subtotal)}</td>
             </tr>
             <tr>
               <td style="padding:6px 0;color:#555;font-size:14px">Shipping</td>
-              <td style="padding:6px 0;text-align:right;font-family:monospace;font-size:14px">${order.shippingFee === 0 ? "Free (pickup)" : formatNGN(order.shippingFee)}</td>
+              <td style="padding:6px 0;text-align:right;font-family:monospace;font-size:14px">${order.shippingFee === 0 ? "Free (Pickup)" : formatNGN(order.shippingFee)}</td>
             </tr>
-            <tr style="border-top:2px solid #111">
+            <tr style="border-top:1.5px solid #16130f">
               <td style="padding:10px 0 0;font-weight:700;font-size:16px">Total</td>
-              <td style="padding:10px 0 0;text-align:right;font-family:monospace;font-weight:700;font-size:16px">${formatNGN(order.total)}</td>
+              <td style="padding:10px 0 0;text-align:right;font-family:monospace;font-weight:700;font-size:17px;color:#c8852b">${formatNGN(order.total)}</td>
             </tr>
           </table>
 
@@ -271,7 +296,7 @@ export const onOrderCreated = onDocumentCreated("orders/{orderId}", async (event
 
           <p style="margin:0;font-size:14px;color:#555;line-height:1.7">
             Questions? Reply to this email or chat with us on WhatsApp at
-            <a href="https://wa.me/2347017377822" style="color:#d4af37;font-weight:600">+234 701 737 7822</a>.
+            <a href="https://wa.me/2347017377822" style="color:#c8852b;font-weight:600">+234 701 737 7822</a>.
           </p>
         </td>
       </tr>
@@ -299,17 +324,11 @@ export const onOrderCreated = onDocumentCreated("orders/{orderId}", async (event
     html,
   });
 
-  // Send a plain notification to the store
+  // Send notification to the store
   await resend.emails.send({
     from: EMAIL_FROM,
     to: STORE_EMAIL,
-    subject: `[NEW ORDER] ${order.id} — ${formatNGN(order.total)} — ${isBank ? "Bank transfer" : "Paystack"}`,
-    html: `<p>New order from <strong>${customerName}</strong> (${order.customer.email})</p>
-<p>Order ID: <strong>${order.id}</strong><br>
-Total: <strong>${formatNGN(order.total)}</strong><br>
-Payment: <strong>${isBank ? "Bank transfer (pending)" : "Paystack (paid)"}</strong><br>
-Fulfillment: <strong>${order.fulfillment}</strong></p>
-<p>Items:<br>${order.items.map((l) => `${l.name} × ${l.quantity}${l.size ? ` (${l.size})` : ""}`).join("<br>")}</p>
-${order.orderNote ? `<p>Customer note: <em>${order.orderNote}</em></p>` : ""}`,
+    subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
+    html,
   });
 });

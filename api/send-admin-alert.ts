@@ -3,7 +3,8 @@ import { resend, EMAIL_FROM, STORE_EMAIL, formatNGN } from "./_lib.js";
 import type { OrderPayload } from "./_lib.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = (req.headers.origin as string) || "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 

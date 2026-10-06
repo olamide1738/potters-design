@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartLine, Product } from "@/types";
 import { getItemUnitPrice } from "@/lib/format";
+import { trackAddToCart } from "@/lib/meta-pixel";
 
 export interface AppliedDiscount {
   code: string;
@@ -46,7 +47,14 @@ export const useStore = create<StoreState>()(
       compare: [],
       appliedDiscount: null,
 
-      addToCart: (product, opts = {}) =>
+      addToCart: (product, opts = {}) => {
+        const unitPrice = getItemUnitPrice(product.price, opts.size);
+        trackAddToCart({
+          productId: product.id,
+          name: product.name,
+          unitPrice,
+          quantity: opts.quantity || 1,
+        });
         set((state) => {
           const { size, color, length, quantity = 1, expressProduction = false } = opts;
           const existing = state.cart.find(
@@ -103,7 +111,8 @@ export const useStore = create<StoreState>()(
             expressProduction: expressProduction ? true : undefined,
           };
           return { cart: [...state.cart, line] };
-        }),
+        });
+      },
 
       removeFromCart: (productId, size, color, length) =>
         set((state) => ({

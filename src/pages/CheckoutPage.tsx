@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { verifyAndSavePaystackOrder, saveBankOrder, type OrderPayload } from "@/lib/orders";
+import { verifyAndSavePaystackOrder, saveBankOrder, generateOrderId, type OrderPayload } from "@/lib/orders";
+import { createOrderInFirestore } from "@/lib/orders-db";
 import { isNewCustomerEmail, recordCustomerEmailLocally } from "@/lib/customer-check";
+import { trackInitiateCheckout } from "@/lib/meta-pixel";
 
 declare global {
   interface Window {
@@ -159,6 +161,7 @@ export function CheckoutPage() {
   const discountAmount = useStore((s) => s.cartDiscountAmount());
   const expressProductionFee = useStore((s) => s.cartExpressProductionFee());
   const toggleCartLineExpressProduction = useStore((s) => s.toggleCartLineExpressProduction);
+  const clearCart = useStore((s) => s.clearCart);
   const [showExpressModal, setShowExpressModal] = useState(false);
   const navigate = useNavigate();
   const products = useProducts();
@@ -208,6 +211,13 @@ export function CheckoutPage() {
   useEffect(() => {
     return subscribeShipping();
   }, [subscribeShipping]);
+
+  // Track Meta Pixel InitiateCheckout
+  useEffect(() => {
+    if (cart.length > 0) {
+      trackInitiateCheckout(cart, total);
+    }
+  }, []);
 
   const lagosZoneList = useMemo(() => {
     return shippingSettings.lagosZones && shippingSettings.lagosZones.length > 0
@@ -524,49 +534,67 @@ export function CheckoutPage() {
     paymentMethod,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allFilled) return;
 
+    const orderId = generateOrderId();
+    const orderData = buildOrderPayload();
+
     if (paymentMethod === "paystack") {
       if (!window.PaystackPop) {
-        // Script never finished loading (slow network, blocked by an ad-blocker,
-        // etc). Give the user real feedback instead of doing nothing, and retry
-        // the load so a second click has a chance of working.
         addToast("Payment couldn't start — please try again in a moment.");
         setPaystackLoadFailed(true);
         loadPaystackScript();
         return;
       }
 
+      setSubmitting(true);
+
+      // Pre-save order to Firestore directly with status "pending" BEFORE opening Paystack.
+      // This prevents ANY loss of orders if the customer completes payment and immediately closes the tab.
       try {
-        const orderData = buildOrderPayload();
-        const ref = `PD-${Date.now()}`;
+        await createOrderInFirestore(orderId, orderData, "pending");
+        console.log("[Checkout] Pre-saved pending order to database:", orderId);
+      } catch (err) {
+        console.warn("[Checkout] Pre-save to database failed, will continue to payment gateway:", err);
+      } finally {
+        setSubmitting(false);
+      }
+
+      try {
         const handler = window.PaystackPop.setup({
           key: "pk_live_bd55418082459fe2f518a87d043323461a3d029a",
           email: form.email,
           amount: Math.round(total * 100),
           currency: "NGN",
-          ref,
+          ref: orderId,
           metadata: {
             referrer: typeof window !== "undefined" ? window.location.href : "",
+            orderId,
             orderData,
           },
-          // Paystack's SDK rejects async functions here ("Attribute callback
-          // must be a valid function") — must be a plain function that
-          // kicks off the async work itself, not one that returns a Promise.
           callback: (response: { reference: string }) => {
             setSubmitting(true);
             recordCustomerEmailLocally(form.email);
-            verifyAndSavePaystackOrder(response.reference, orderData)
-              .catch(() => {})
+            verifyAndSavePaystackOrder(response.reference, orderData, orderId)
+              .catch((err) => {
+                console.warn("[Checkout] Payment verification error:", err);
+              })
               .finally(() => {
+                try {
+                  localStorage.setItem("pd-last-order", JSON.stringify({ orderId, orderData, paymentMethod: "paystack", email: form.email }));
+                } catch {}
+                clearCart();
+                setSubmitting(false);
                 navigate("/order-confirmation", {
-                  state: { orderId: response.reference, paymentMethod: "paystack", email: form.email },
+                  state: { orderId, paymentMethod: "paystack", email: form.email, order: orderData },
                 });
               });
           },
-          onClose: () => {},
+          onClose: () => {
+            setSubmitting(false);
+          },
         });
         handler.openIframe();
       } catch (err) {
@@ -576,26 +604,25 @@ export function CheckoutPage() {
       return;
     }
 
-    // Bank transfer — save pending order
+    // Bank transfer — save pending order directly into Firestore and notify
     setSubmitting(true);
     recordCustomerEmailLocally(form.email);
-    saveBankOrder(buildOrderPayload())
-      .then((orderId) => {
-        navigate("/order-confirmation", {
-          state: { orderId, paymentMethod: "bank", email: form.email },
-        });
-      })
-      .catch(() => {
-        // Fallback: still show confirmation with timestamp ref
-        navigate("/order-confirmation", {
-          state: {
-            orderId: `PD-${Date.now()}`,
-            paymentMethod: "bank",
-            email: form.email,
-          },
-        });
-      })
-      .finally(() => setSubmitting(false));
+
+    try {
+      await saveBankOrder(orderData, orderId);
+      try {
+        localStorage.setItem("pd-last-order", JSON.stringify({ orderId, orderData, paymentMethod: "bank", email: form.email }));
+      } catch {}
+      clearCart();
+      navigate("/order-confirmation", {
+        state: { orderId, paymentMethod: "bank", email: form.email, order: orderData },
+      });
+    } catch (err) {
+      console.error("[Checkout] Bank order placement failed:", err);
+      addToast("Could not place order. Please check your internet connection or reach us on WhatsApp.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
 

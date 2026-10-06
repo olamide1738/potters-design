@@ -1,65 +1,115 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+import { createHmac, createHash } from "crypto";
+import admin from "firebase-admin";
 import { Resend } from "resend";
-import { createHash } from "crypto";
 
-export function getDb() {
-  if (!getApps().length) {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ── Environment Configuration ──────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
+const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || "";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const EMAIL_FROM = process.env.EMAIL_FROM || "orders@pottersdesign.com";
+const STORE_EMAIL = process.env.STORE_EMAIL || "pottersdesigning@gmail.com";
+const META_PIXEL_ID = process.env.META_PIXEL_ID || "";
+const META_CAPI_TOKEN = process.env.META_CONVERSION_API_TOKEN || "";
+
+// ── Firebase Admin Initialization ──────────────────────────────────────────
+function getDb() {
+  if (!admin.apps.length) {
     const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!sa) throw new Error("FIREBASE_SERVICE_ACCOUNT is not configured");
-    initializeApp({ credential: cert(JSON.parse(sa) as Parameters<typeof cert>[0]) });
+    if (sa) {
+      try {
+        admin.initializeApp({
+          credential: admin.credential.cert(JSON.parse(sa)),
+        });
+      } catch (err) {
+        console.warn("[Firebase] Could not parse FIREBASE_SERVICE_ACCOUNT string, using default init:", err);
+        admin.initializeApp({ projectId: "pottersdesign-f0ab8" });
+      }
+    } else {
+      admin.initializeApp({ projectId: "pottersdesign-f0ab8" });
+    }
   }
-  return getFirestore();
-}
-export { FieldValue };
-export const resend = new Resend(process.env.RESEND_API_KEY || "");
-export const EMAIL_FROM = process.env.EMAIL_FROM ?? "orders@pottersdesign.com";
-export const STORE_EMAIL = process.env.STORE_EMAIL ?? "pottersdesigning@gmail.com";
-
-export interface CartLine {
-  productId: number;
-  slug: string;
-  name: string;
-  unitPrice: number;
-  image: string;
-  size?: string;
-  color?: string;
-  length?: string;
-  quantity: number;
-  expressProduction?: boolean;
+  return admin.firestore();
 }
 
-export interface OrderPayload {
-  customer: { firstName: string; lastName: string; email: string; phone: string };
-  fulfillment: "delivery" | "pickup";
-  shippingAddress?: { address: string; city: string; state: string; countryCode: string; zip: string };
-  items: CartLine[];
-  subtotal: number;
-  shippingFee: number;
-  expressProduction?: boolean;
-  expressProductionFee?: number;
-  total: number;
-  weightKg: number;
-  orderNote: string;
-  paymentMethod: "bank" | "paystack";
-}
+const FieldValue = admin.firestore.FieldValue;
+const resend = new Resend(RESEND_API_KEY);
 
-export function generateOrderId(): string {
+// ── Helpers ────────────────────────────────────────────────────────────────
+function generateOrderId() {
   const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 5).toUpperCase();
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `PD-${ts}-${rand}`;
 }
 
-export function formatNGN(amount: number): string {
-  return `₦${amount.toLocaleString("en-NG")}`;
+function formatNGN(amount) {
+  return `₦${Number(amount || 0).toLocaleString("en-NG")}`;
 }
 
-export async function sendOrderEmails(
-  order: OrderPayload & { id: string },
-): Promise<void> {
-  const customerName = `${order.customer.firstName} ${order.customer.lastName}`.trim();
+function sha256(val) {
+  return createHash("sha256").update(String(val || "").trim().toLowerCase()).digest("hex");
+}
+
+// ── Server-Side Meta Conversions API (CAPI) ────────────────────────────────
+async function sendMetaConversionApiPurchase(order) {
+  if (!META_CAPI_TOKEN || !META_PIXEL_ID) return;
+
+  try {
+    const payload = {
+      data: [
+        {
+          event_name: "Purchase",
+          event_time: Math.floor(Date.now() / 1000),
+          event_id: order.id,
+          action_source: "website",
+          event_source_url: "https://pottersdesign.com/order-confirmation",
+          user_data: {
+            em: [sha256(order.customer?.email)],
+            ph: [sha256(order.customer?.phone?.replace(/[^0-9]/g, ""))],
+            fn: [sha256(order.customer?.firstName)],
+            ln: [sha256(order.customer?.lastName)],
+          },
+          custom_data: {
+            currency: "NGN",
+            value: order.total,
+            content_type: "product",
+            content_ids: (order.items || []).map((i) => String(i.productId)),
+            num_items: (order.items || []).reduce((acc, i) => acc + (i.quantity || 1), 0),
+            order_id: order.id,
+          },
+        },
+      ],
+    };
+
+    const res = await fetch(`https://graph.facebook.com/v19.0/${META_PIXEL_ID}/events?access_token=${META_CAPI_TOKEN}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn("[Meta CAPI] Server event error:", errText);
+    } else {
+      console.log(`[Meta CAPI] Server purchase event successfully sent for #${order.id}`);
+    }
+  } catch (err) {
+    console.warn("[Meta CAPI] Network error sending conversion event:", err);
+  }
+}
+
+// ── Email Notification System ──────────────────────────────────────────────
+async function sendOrderEmails(order) {
+  const customerName = `${order.customer?.firstName || ""} ${order.customer?.lastName || ""}`.trim() || "Valued Customer";
   const isBank = order.paymentMethod === "bank";
-  const adminDashboardUrl = process.env.ADMIN_URL ?? "https://pottersdesign.com/admin";
+  const adminDashboardUrl = process.env.ADMIN_URL || "https://pottersdesign.com/admin";
   const orderDateStr = new Date().toLocaleDateString("en-NG", {
     year: "numeric",
     month: "long",
@@ -82,12 +132,12 @@ export async function sendOrderEmails(
       : order.shippingAddress
       ? `<div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:14px 16px;margin:0 0 20px">
           <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em">Delivery Address</p>
-          <p style="margin:0;font-size:14px;font-weight:600;color:#111">${order.shippingAddress.address}</p>
-          <p style="margin:3px 0 0;font-size:13px;color:#555">${order.shippingAddress.city}, ${order.shippingAddress.state}, ${order.shippingAddress.countryCode} ${order.shippingAddress.zip ? `· ${order.shippingAddress.zip}` : ""}</p>
+          <p style="margin:0;font-size:14px;font-weight:600;color:#111">${order.shippingAddress.address || ""}</p>
+          <p style="margin:3px 0 0;font-size:13px;color:#555">${order.shippingAddress.city || ""}, ${order.shippingAddress.state || ""}, ${order.shippingAddress.countryCode || "NG"} ${order.shippingAddress.zip ? `· ${order.shippingAddress.zip}` : ""}</p>
         </div>`
       : "";
 
-  const itemsHtml = order.items
+  const itemsHtml = (order.items || [])
     .map((line) => {
       const options = [
         line.size && `Size: ${line.size}`,
@@ -115,7 +165,6 @@ export async function sendOrderEmails(
     })
     .join("");
 
-  // Customer email HTML
   const customerHtml = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;color:#111">
@@ -129,14 +178,13 @@ export async function sendOrderEmails(
       <tr><td style="padding:36px 40px">
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#16130f">${isBank ? "Order Received" : "Payment Confirmed"} 🎉</h1>
         <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6">
-          Hi ${customerName || "there"}, ${
+          Hi ${customerName}, ${
             isBank
               ? "thank you for choosing Potter's Design. Your order details have been recorded in our system. Please complete your bank transfer to begin production."
               : "thank you for your payment! Your transaction was confirmed and we are beginning to craft your order."
           }
         </p>
 
-        <!-- Order Summary Card -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background:#fbf9f6;border:1px solid #ebdcc6;border-radius:10px;padding:16px 20px;margin:0 0 24px">
           <tr>
             <td style="padding:4px 0">
@@ -161,18 +209,16 @@ export async function sendOrderEmails(
           </tr>
         </table>
 
-        <!-- Delivery & Contact Information -->
         <h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;color:#c8852b">Customer & Delivery Information</h3>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:#f9f9f9;border-radius:8px;padding:14px 16px;font-size:13px">
           <tr><td style="padding:3px 0;color:#666">Customer:</td><td style="padding:3px 0;font-weight:600;text-align:right">${customerName}</td></tr>
-          <tr><td style="padding:3px 0;color:#666">Email:</td><td style="padding:3px 0;font-weight:600;text-align:right">${order.customer.email}</td></tr>
-          <tr><td style="padding:3px 0;color:#666">Phone:</td><td style="padding:3px 0;font-weight:600;font-family:monospace;text-align:right">${order.customer.phone}</td></tr>
+          <tr><td style="padding:3px 0;color:#666">Email:</td><td style="padding:3px 0;font-weight:600;text-align:right">${order.customer?.email}</td></tr>
+          <tr><td style="padding:3px 0;color:#666">Phone:</td><td style="padding:3px 0;font-weight:600;font-family:monospace;text-align:right">${order.customer?.phone}</td></tr>
         </table>
 
         ${fulfillmentDetailsHtml}
 
-        <!-- Itemized Order Table -->
-        <h3 style="margin:20px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;color:#c8852b">Ordered Items (${order.items.length})</h3>
+        <h3 style="margin:20px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;color:#c8852b">Ordered Items (${(order.items || []).length})</h3>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px">
           <thead>
             <tr>
@@ -185,7 +231,6 @@ export async function sendOrderEmails(
           </tbody>
         </table>
 
-        <!-- Totals Breakdown -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#fbf9f6;border-radius:8px;padding:16px">
           <tr><td style="padding:5px 0;color:#555;font-size:14px">Subtotal</td><td style="padding:5px 0;text-align:right;font-family:monospace;font-size:14px">${formatNGN(order.subtotal)}</td></tr>
           <tr><td style="padding:5px 0;color:#555;font-size:14px">Shipping Fee</td><td style="padding:5px 0;text-align:right;font-family:monospace;font-size:14px">${order.shippingFee === 0 ? "Free (Pickup)" : formatNGN(order.shippingFee)}</td></tr>
@@ -220,7 +265,7 @@ export async function sendOrderEmails(
                   <tr><td style="padding:4px 0;color:#78350f">Account Name:</td><td style="padding:4px 0;color:#78350f;text-align:right">The Potters Design Limited</td></tr>
                 </table>
                 <p style="margin:0;font-size:13px;color:#78350f">
-                  After payment, tap here to send your proof of payment on WhatsApp:
+                  After payment, send your proof of payment on WhatsApp:
                   <a href="https://wa.me/2347017377822?text=Hello%2C%20I%20just%20placed%20order%20${order.id}%20on%20Potters%20Design.%20Here%20is%20my%20payment%20receipt." style="color:#059669;font-weight:700;text-decoration:underline">+234 701 737 7822</a>
                 </p>
               </div>`
@@ -242,7 +287,6 @@ export async function sendOrderEmails(
 </table>
 </body></html>`;
 
-  // Admin store notification HTML
   const adminHtml = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;color:#111">
@@ -262,15 +306,15 @@ export async function sendOrderEmails(
         <h3 style="margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:#c8852b">Customer Details</h3>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#f9f9f9;border-radius:8px;padding:14px">
           <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Name:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right">${customerName}</td></tr>
-          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Email:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right"><a href="mailto:${order.customer.email}" style="color:#c8852b">${order.customer.email}</a></td></tr>
-          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Phone:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right;font-family:monospace">${order.customer.phone}</td></tr>
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Email:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right"><a href="mailto:${order.customer?.email}" style="color:#c8852b">${order.customer?.email}</a></td></tr>
+          <tr><td style="padding:4px 0;font-size:13px;color:#555">Customer Phone:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right;font-family:monospace">${order.customer?.phone}</td></tr>
           <tr><td style="padding:4px 0;font-size:13px;color:#555">Payment Method:</td><td style="padding:4px 0;font-size:13px;font-weight:700;text-align:right;text-transform:uppercase">${order.paymentMethod} (${isBank ? "Pending Bank Transfer" : "Paid via Paystack"})</td></tr>
           <tr><td style="padding:4px 0;font-size:13px;color:#555">Fulfillment:</td><td style="padding:4px 0;font-size:13px;font-weight:600;text-align:right">${order.fulfillment === "pickup" ? "Store Pickup" : "Nationwide / International Delivery"}</td></tr>
         </table>
 
         ${fulfillmentDetailsHtml}
 
-        <h3 style="margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:#c8852b">Items Ordered (${order.items.length})</h3>
+        <h3 style="margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:#c8852b">Items Ordered (${(order.items || []).length})</h3>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px">
           ${itemsHtml}
         </table>
@@ -288,7 +332,6 @@ export async function sendOrderEmails(
           </div>
         ` : ""}
 
-        <!-- Direct Admin Dashboard Link -->
         <div style="text-align:center;margin:32px 0 10px">
           <a href="${adminDashboardUrl}" target="_blank" style="background:#16130f;color:#c8852b;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block;border:1px solid #c8852b">
             VIEW ORDER IN ADMIN DASHBOARD →
@@ -306,7 +349,7 @@ export async function sendOrderEmails(
   const customerPromise = resend.emails
     .send({
       from: EMAIL_FROM,
-      to: order.customer.email,
+      to: order.customer?.email,
       subject: customerSubject,
       html: customerHtml,
     })
@@ -315,7 +358,7 @@ export async function sendOrderEmails(
       return resend.emails.send({
         from: EMAIL_FROM,
         to: "lammiejay02@gmail.com",
-        subject: `[CUSTOMER COPY to ${order.customer.email}] ${customerSubject}`,
+        subject: `[CUSTOMER COPY to ${order.customer?.email}] ${customerSubject}`,
         html: customerHtml,
       }).catch(() => null);
     });
@@ -323,7 +366,7 @@ export async function sendOrderEmails(
   const adminPromise = resend.emails
     .send({
       from: EMAIL_FROM,
-      to: STORE_EMAIL, // pottersdesigning@gmail.com
+      to: STORE_EMAIL,
       subject: `🚨 NEW ORDER RECEIVED! — #${order.id} — ${formatNGN(order.total)} (${customerName})`,
       html: adminHtml,
     })
@@ -338,62 +381,238 @@ export async function sendOrderEmails(
     });
 
   const capiPromise = sendMetaConversionApiPurchase(order).catch((err) => {
-    console.warn("[Meta CAPI] Event dispatch caught error:", err);
+    console.warn("[Meta CAPI] Dispatch error:", err);
   });
 
   await Promise.allSettled([customerPromise, adminPromise, capiPromise]);
 }
 
-const META_PIXEL_ID = process.env.META_PIXEL_ID || "";
-const META_CAPI_TOKEN = process.env.META_CONVERSION_API_TOKEN || "";
+// ── Express Server Setup ───────────────────────────────────────────────────
+const app = express();
 
-function sha256(val: string): string {
-  return createHash("sha256").update(val.trim().toLowerCase()).digest("hex");
-}
+// Enable CORS for all incoming origins
+app.use(cors({ origin: true, credentials: true }));
 
-export async function sendMetaConversionApiPurchase(order: OrderPayload & { id: string }): Promise<void> {
-  if (!META_CAPI_TOKEN || !META_PIXEL_ID) return;
+// Parse raw buffer for Paystack HMAC verification, plus JSON
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
+app.use(express.urlencoded({ extended: true }));
 
+// ── 1. Health Check Endpoint ───────────────────────────────────────────────
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "Potter's Design Backend API",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ── 2. Create Bank Order ───────────────────────────────────────────────────
+app.post("/api/create-bank-order", async (req, res) => {
   try {
-    const payload = {
-      data: [
-        {
-          event_name: "Purchase",
-          event_time: Math.floor(Date.now() / 1000),
-          event_id: order.id,
-          action_source: "website",
-          event_source_url: "https://pottersdesign.com/order-confirmation",
-          user_data: {
-            em: [sha256(order.customer.email)],
-            ph: [sha256(order.customer.phone.replace(/[^0-9]/g, ""))],
-            fn: [sha256(order.customer.firstName)],
-            ln: [sha256(order.customer.lastName)],
-          },
-          custom_data: {
-            currency: "NGN",
-            value: order.total,
-            content_type: "product",
-            content_ids: order.items.map((i) => String(i.productId)),
-            num_items: order.items.reduce((acc, i) => acc + i.quantity, 0),
-            order_id: order.id,
-          },
-        },
-      ],
-    };
+    const { orderData, orderId: clientOrderId } = req.body || {};
+    if (!orderData) {
+      return res.status(400).json({ error: "Missing order data" });
+    }
 
-    const res = await fetch(`https://graph.facebook.com/v19.0/${META_PIXEL_ID}/events?access_token=${META_CAPI_TOKEN}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const orderId = clientOrderId || generateOrderId();
+    const docRef = getDb().collection("orders").doc(orderId);
+    const existingSnap = await docRef.get();
+
+    if (!existingSnap.exists) {
+      await docRef.set({
+        ...orderData,
+        id: orderId,
+        reference: `bank-${orderId}`,
+        status: "pending",
+        createdAt: FieldValue.serverTimestamp(),
+        paidAt: null,
+      });
+    }
+
+    // Trigger emails & Meta CAPI in background
+    sendOrderEmails({ ...orderData, id: orderId }).catch((err) => {
+      console.error("[Email] Background dispatch failed:", err);
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.warn("[Meta CAPI] Server purchase event error:", errText);
-    } else {
-      console.log(`[Meta CAPI] Server purchase event successfully sent for #${order.id}`);
-    }
+    return res.status(200).json({ success: true, orderId });
   } catch (err) {
-    console.warn("[Meta CAPI] Error sending conversion event:", err);
+    console.error("[API] create-bank-order error:", err);
+    return res.status(500).json({ error: "Internal server error saving bank order" });
   }
-}
+});
+
+// ── 3. Verify Payment (Paystack) ───────────────────────────────────────────
+app.post("/api/verify-payment", async (req, res) => {
+  try {
+    const { reference, orderData, orderId: clientOrderId } = req.body || {};
+    if (!reference || !orderData) {
+      return res.status(400).json({ error: "Missing reference or order data" });
+    }
+
+    // Verify transaction with Paystack API
+    let paystackData;
+    try {
+      const response = await fetch(
+        `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
+        { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } }
+      );
+      const json = await response.json();
+      paystackData = json.data;
+    } catch {
+      return res.status(502).json({ error: "Could not reach Paystack — please contact support" });
+    }
+
+    if (!paystackData || paystackData.status !== "success") {
+      return res.status(402).json({ error: "Payment was not successful" });
+    }
+
+    // Guard: amount in kobo check (allow ±₦1 rounding)
+    const expectedKobo = Math.round(orderData.total * 100);
+    const paidKobo = paystackData.amount;
+    if (Math.abs(paidKobo - expectedKobo) > 100) {
+      return res.status(402).json({ error: "Paid amount does not match order total" });
+    }
+
+    const orderId = clientOrderId || generateOrderId();
+    const docRef = getDb().collection("orders").doc(orderId);
+    const existingSnap = await docRef.get();
+
+    if (existingSnap.exists) {
+      await docRef.update({
+        status: "paid",
+        reference,
+        paystackChannel: paystackData.channel || "card",
+        paidAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      await docRef.set({
+        ...orderData,
+        id: orderId,
+        reference,
+        status: "paid",
+        paystackChannel: paystackData.channel || "card",
+        createdAt: FieldValue.serverTimestamp(),
+        paidAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Dispatch receipt emails & Meta telemetry
+    sendOrderEmails({ ...orderData, id: orderId }).catch((err) => {
+      console.error("[Email] Payment email dispatch failed:", err);
+    });
+
+    return res.status(200).json({ success: true, orderId });
+  } catch (err) {
+    console.error("[API] verify-payment error:", err);
+    return res.status(500).json({ error: "Internal server error verifying payment" });
+  }
+});
+
+// ── 4. Paystack Webhook Handler ────────────────────────────────────────────
+app.post("/api/paystack-webhook", async (req, res) => {
+  try {
+    const rawBody = req.rawBody ? req.rawBody.toString("utf8") : JSON.stringify(req.body);
+    const sig = req.headers["x-paystack-signature"];
+    const hash = createHmac("sha512", PAYSTACK_SECRET).update(rawBody).digest("hex");
+
+    if (!sig || hash !== sig) {
+      return res.status(401).send("Unauthorized signature");
+    }
+
+    const body = req.body;
+    if (body?.event === "charge.success") {
+      const data = body.data;
+      const db = getDb();
+      let docRef = null;
+      let orderDocData = null;
+
+      const snap = await db.collection("orders").where("reference", "==", data.reference).limit(1).get();
+      if (!snap.empty) {
+        docRef = snap.docs[0].ref;
+        orderDocData = snap.docs[0].data();
+      } else {
+        const byId = await db.collection("orders").doc(data.reference).get();
+        if (byId.exists) {
+          docRef = byId.ref;
+          orderDocData = byId.data();
+        }
+      }
+
+      if (docRef && orderDocData) {
+        await docRef.update({
+          status: "paid",
+          paidAt: FieldValue.serverTimestamp(),
+          paystackChannel: data.channel || "card",
+        });
+        sendOrderEmails({ ...orderDocData, id: docRef.id, paymentMethod: "paystack" }).catch((err) => {
+          console.error("[Webhook Email] Failed:", err);
+        });
+      } else if (data.metadata?.orderData) {
+        const orderData = data.metadata.orderData;
+        const orderId = data.reference;
+        await db.collection("orders").doc(orderId).set({
+          ...orderData,
+          id: orderId,
+          reference: orderId,
+          status: "paid",
+          paystackChannel: data.channel || "card",
+          createdAt: FieldValue.serverTimestamp(),
+          paidAt: FieldValue.serverTimestamp(),
+        });
+        sendOrderEmails({ ...orderData, id: orderId, paymentMethod: "paystack" }).catch((err) => {
+          console.error("[Webhook Email] Fallback failed:", err);
+        });
+      }
+    }
+
+    return res.status(200).send("OK");
+  } catch (err) {
+    console.error("[Webhook] Processing error:", err);
+    return res.status(500).send("Error processing webhook");
+  }
+});
+
+// ── 5. Send Admin Alert Endpoint ───────────────────────────────────────────
+app.post("/api/send-admin-alert", async (req, res) => {
+  try {
+    const { orderData } = req.body || {};
+    if (!orderData || !orderData.id) {
+      return res.status(400).json({ error: "Missing order data or ID" });
+    }
+
+    await sendOrderEmails(orderData);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("[API] send-admin-alert error:", err);
+    return res.status(500).json({ error: "Failed to dispatch alert" });
+  }
+});
+
+// ── 6. Static Frontend Serving (Optional All-in-One Hostinger Setup) ───────
+const distPath = path.join(__dirname, "dist");
+app.use(express.static(distPath));
+
+// Fallback to index.html for Single-Page Application (SPA) client-side routes
+app.use((req, res, next) => {
+  if (req.method !== "GET" || req.path.startsWith("/api")) {
+    return next();
+  }
+  res.sendFile(path.join(distPath, "index.html"), (err) => {
+    if (err) {
+      res.status(200).send("The Potter's Design API Server is active.");
+    }
+  });
+});
+
+// ── Start Server ───────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`[Potter's Design Server] Live and listening on port ${PORT}`);
+  console.log(`[Potter's Design Server] Health check available at: http://localhost:${PORT}/api/health`);
+});

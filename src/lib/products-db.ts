@@ -31,14 +31,20 @@ export function subscribeToProducts(
   onData: (products: Product[]) => void,
   onError?: (err: Error) => void,
 ): () => void {
-  return onSnapshot(
-    collection(db, COLLECTION),
-    (snap) => {
-      const list = snap.docs.map((d) => d.data() as Product);
-      onData(list);
-    },
-    (err) => onError?.(err),
-  );
+  try {
+    return onSnapshot(
+      collection(db, COLLECTION),
+      (snap) => {
+        const list = snap.docs.map((d) => d.data() as Product);
+        onData(list);
+      },
+      (err) => onError?.(err),
+    );
+  } catch (err) {
+    console.error("Firestore subscribe error:", err);
+    onError?.(err as Error);
+    return () => {};
+  }
 }
 
 export async function createOrUpdateProduct(product: Product): Promise<void> {

@@ -20,8 +20,15 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   user: null,
   loading: true,
 
-  init: () =>
-    onAuthStateChanged(auth, (user) => set({ user, loading: false })),
+  init: () => {
+    try {
+      return onAuthStateChanged(auth, (user) => set({ user, loading: false }));
+    } catch (err) {
+      console.warn("Auth initialization failed:", err);
+      set({ user: null, loading: false });
+      return () => {};
+    }
+  },
 
   signIn: async (email, password) => {
     await signInWithEmailAndPassword(auth, email.trim(), password);

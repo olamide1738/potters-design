@@ -5,9 +5,12 @@ import {
   query,
   orderBy,
   updateDoc,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Order, OrderStatus, OrderProductionStatus } from "@/types";
+import type { OrderPayload } from "./orders";
 
 const COLLECTION = "orders";
 
@@ -58,4 +61,49 @@ export async function updateOrderProductionStatus(
 ): Promise<void> {
   const ref = doc(db, COLLECTION, orderId);
   await updateDoc(ref, { productionStatus });
+}
+
+/**
+ * Strips undefined properties recursively so Firestore DocumentReference.set() never throws.
+ */
+function sanitizeForFirestore<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+/**
+ * Creates an order directly in Firestore from the client.
+ * Guarantees the order is reflected in the database immediately with zero CORS/server dependencies.
+ */
+export async function createOrderInFirestore(
+  orderId: string,
+  orderData: OrderPayload,
+  status: OrderStatus = "pending",
+): Promise<void> {
+  const ref = doc(db, COLLECTION, orderId);
+  const cleanData = sanitizeForFirestore(orderData);
+  await setDoc(ref, {
+    ...cleanData,
+    id: orderId,
+    reference: orderData.paymentMethod === "bank" ? `bank-${orderId}` : orderId,
+    status,
+    createdAt: serverTimestamp(),
+    paidAt: status === "paid" ? serverTimestamp() : null,
+  });
+}
+
+/**
+ * Marks an existing order as paid in Firestore (e.g. after Paystack verification).
+ */
+export async function markOrderPaidInFirestore(
+  orderId: string,
+  reference?: string,
+  channel?: string,
+): Promise<void> {
+  const ref = doc(db, COLLECTION, orderId);
+  await updateDoc(ref, {
+    status: "paid",
+    paidAt: serverTimestamp(),
+    ...(reference ? { reference } : {}),
+    ...(channel ? { paystackChannel: channel } : {}),
+  });
 }

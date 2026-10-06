@@ -11,6 +11,7 @@ import {
 } from "@/lib/delivery";
 import { ProductCard } from "@/components/ProductCard";
 import { SizeGuide } from "@/components/SizeGuide";
+import { trackViewContent } from "@/lib/meta-pixel";
 
 const PLACEHOLDER = "/hanger-placeholder.svg";
 
@@ -122,6 +123,12 @@ export function ProductPage() {
     const id = setInterval(() => setTimeline(computeDeliveryTimeline()), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (product) {
+      trackViewContent(product);
+    }
+  }, [product]);
 
   const [lastSelectedVariation, setLastSelectedVariation] = useState<"color" | "length" | null>(null);
 

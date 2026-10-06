@@ -3,7 +3,7 @@ import { createHmac } from "crypto";
 import { getDb, FieldValue, sendOrderEmails } from "./_lib.js";
 import type { OrderPayload } from "./_lib.js";
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || "sk_live_1a980e7291d6d00bee171624bf0dd071369e7adb";
+const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || "";
 
 export const config = {
   api: { bodyParser: false },
@@ -41,15 +41,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .limit(1)
       .get();
 
+    let docRef: FirebaseFirestore.DocumentReference | null = null;
+    let orderDocData: (OrderPayload & { id: string }) | null = null;
+
     if (!snap.empty) {
-      const docRef = snap.docs[0].ref;
-      const orderDocData = snap.docs[0].data() as OrderPayload & { id: string };
+      docRef = snap.docs[0].ref;
+      orderDocData = snap.docs[0].data() as OrderPayload & { id: string };
+    } else {
+      const byId = await db.collection("orders").doc(body.data.reference).get();
+      if (byId.exists) {
+        docRef = byId.ref;
+        orderDocData = byId.data() as OrderPayload & { id: string };
+      }
+    }
+
+    if (docRef && orderDocData) {
       await docRef.update({
         status: "paid",
         paidAt: FieldValue.serverTimestamp(),
+        paystackChannel: body.data.channel || "card",
       });
       try {
-        await sendOrderEmails({ ...orderDocData, id: snap.docs[0].id, paymentMethod: "paystack" });
+        await sendOrderEmails({ ...orderDocData, id: docRef.id, paymentMethod: "paystack" });
       } catch (err) {
         console.error("Webhook email dispatch failed for existing doc:", err);
       }
